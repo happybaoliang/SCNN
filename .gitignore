@@ -1,0 +1,16 @@
+.apc
+csim/
+*.bin
+*.out
+*.xml
+*.log
+*.aps
+Debug/
+checker
+.project
+.cproject
+.settings
+generator
+.autopilot/
+*.directive
+vivado_hls.app
