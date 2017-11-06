@@ -1,19 +1,24 @@
 #include"ProcessElement.hpp"
 
 
-xcoord_type GetXCoord(){
-	xcoord_type xcoord;
+inline xcoord_type GetXCoord(){
+	xcoord_type xcoord = 0;
 	return xcoord;
 }
 
 
-ycoord_type GetYCoord(){
-	ycoord_type ycoord;
+inline ycoord_type GetYCoord(){
+	ycoord_type ycoord = 0;
 	return ycoord;
 }
 
 
-ocoord_type GetOCoord(){
-	ocoord_type ocoord;
+inline ocoord_type GetOCoord(){
+	ocoord_type ocoord = 0;
 	return ocoord;
+}
+
+
+void ProcessElement::AccumulateProduct(){
+
 }

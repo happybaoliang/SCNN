@@ -8,6 +8,8 @@ add_files SCNN/MultiplyArray.cpp
 add_files SCNN/MultiplyArray.hpp
 add_files SCNN/ProcessElement.cpp
 add_files SCNN/ProcessElement.hpp
+add_files SCNN/fpga_top.cpp
+add_files SCNN/fpga_top.hpp
 add_files -tb SCNN/cpu_top.cpp
 add_files -tb SCNN/cpu_top.hpp
 add_files -tb SCNN/feature.bin

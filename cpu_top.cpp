@@ -4,6 +4,7 @@
 #include<cmath>
 #include<ctime>
 #include"cpu_top.hpp"
+#include"fpga_top.hpp"
 
 using namespace std;
 
@@ -13,7 +14,11 @@ zeros_type feature_index[FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 feature_type input_feature[INPUT_CHANNEL_NUM][FEATURE_WIDTH][FEATURE_HEIGHT];
 feature_type compressed_feature[FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 
-int num_of_none_zero_weights = 0;
+int num_of_none_zero_output_features = 0;
+zeros_type output_index[FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
+feature_type output_feature[FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
+
+int num_of_none_zero_weights[WEIGHT_CHUNK_NUM] = {0};
 zeros_type weight_index[WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
 weight_type compressed_weight[WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
 weight_type weights[INPUT_CHANNEL_NUM][OUTPUT_CHANNEL_NUM][KERNEL_SIZE][KERNEL_SIZE];
@@ -142,7 +147,6 @@ void CompressWeights(channel_type num_in_channel, channel_type num_out_channel, 
 						if (weights[k][i*chunk_size+j][l][m]!=0){
 							compressed_weight[i][chunk_idx]=weights[k][i*chunk_size+j][l][m];
 							weight_index[i][chunk_idx]=zero_count;
-							num_of_none_zero_weights ++;
 							chunk_idx = chunk_idx + 1;
 							zero_count = 0;
 						}else{
@@ -150,7 +154,6 @@ void CompressWeights(channel_type num_in_channel, channel_type num_out_channel, 
 							if (zero_count==MAX_ZERO_COUNT){
 								weight_index[i][chunk_idx] = zero_count;
 								compressed_weight[i][chunk_idx]=0;
-								num_of_none_zero_weights++;
 								chunk_idx = chunk_idx + 1;
 								zero_count = 0;
 							}
@@ -159,6 +162,15 @@ void CompressWeights(channel_type num_in_channel, channel_type num_out_channel, 
 				}
 			}
 		}
+		if ((chunk_idx%F)!=0){
+			int num_of_padding = F-(chunk_idx%F);
+			for (int z=0;z<num_of_padding;z++){
+				compressed_weight[i][chunk_idx]=0;
+				weight_index[i][chunk_idx] = 0;
+				chunk_idx = chunk_idx + 1;
+			}
+		}
+		num_of_none_zero_weights[i]=chunk_idx;
 	}
 }
 
@@ -197,6 +209,13 @@ void CompressFeatureMap(int num_in_channel, int width, int height, int chunk_per
 }
 
 
+int CheckResults(){
+	int error_count = 0;
+	cout<<"CheckResult is not implemented!"<<endl;
+	return error_count;
+}
+
+
 int main(){
 	srand((unsigned)time(NULL));
 
@@ -213,5 +232,8 @@ int main(){
 	CompressWeights(INPUT_CHANNEL_NUM,OUTPUT_CHANNEL_NUM,WEIGHT_CHUNK_SIZE,KERNEL_SIZE);
 	CompressFeatureMap(INPUT_CHANNEL_NUM,FEATURE_WIDTH,FEATURE_HEIGHT,FEATURE_CHUNK_PER_COL,FEATURE_CHUNK_PER_ROW);
 
-	return 0;
+	Accelerator(compressed_feature,feature_index,num_of_none_zero_features,compressed_weight,weight_index,
+			num_of_none_zero_weights,output_feature,output_index,num_of_none_zero_output_features);
+
+	return CheckResults();
 }
