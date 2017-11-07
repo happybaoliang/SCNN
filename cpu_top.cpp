@@ -9,12 +9,12 @@
 using namespace std;
 
 
-int num_of_none_zero_features = 0;
+int num_of_none_zero_features[FEATURE_CHUNK_NUM] = {0};
 zeros_type feature_index[FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 feature_type input_feature[INPUT_CHANNEL_NUM][FEATURE_WIDTH][FEATURE_HEIGHT];
 feature_type compressed_feature[FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 
-int num_of_none_zero_output_features = 0;
+int num_of_none_zero_output_features[FEATURE_CHUNK_NUM] = {0};
 zeros_type output_index[FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 feature_type output_feature[FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 
@@ -183,12 +183,12 @@ void CompressFeatureMap(int num_in_channel, int width, int height, int chunk_per
 			int zero_count = 0;
 			chunk_id = chunk_id + 1;
 			for (int k=0;k<num_in_channel;k++){
-				for (int l=0;l<chunk_per_row;l++){
-					for (int m=0;m<chunk_per_col;m++){
-						if(input_feature[k][i*chunk_per_row+l][j*chunk_per_col+m]){
-							compressed_feature[chunk_id][chunk_idx] = input_feature[k][i*chunk_per_row+l][j*chunk_per_col+m];
+				for (int l=0;l<FEATURES_ROW_PER_CHUNK;l++){
+					for (int m=0;m<FEATURES_COL_PER_CHUNK;m++){
+						if(input_feature[k][i*FEATURES_ROW_PER_CHUNK+l][j*FEATURES_COL_PER_CHUNK+m]){
+							compressed_feature[chunk_id][chunk_idx] = input_feature[k][i*FEATURES_ROW_PER_CHUNK+l][j*FEATURES_COL_PER_CHUNK+m];
 							feature_index[chunk_id][chunk_idx] = zero_count;
-							num_of_none_zero_features ++;
+							num_of_none_zero_features[chunk_id]++;
 							chunk_idx = chunk_idx + 1;
 							zero_count = 0;
 						}else{
@@ -196,7 +196,7 @@ void CompressFeatureMap(int num_in_channel, int width, int height, int chunk_per
 							if (zero_count==MAX_ZERO_COUNT){
 								feature_index[chunk_id][chunk_idx] = zero_count;
 								compressed_feature[chunk_id][chunk_idx]=0;
-								num_of_none_zero_features ++;
+								num_of_none_zero_features[chunk_id]++;
 								chunk_idx = chunk_idx + 1;
 								zero_count = 0;
 							}
@@ -211,7 +211,32 @@ void CompressFeatureMap(int num_in_channel, int width, int height, int chunk_per
 
 int CheckResults(){
 	int error_count = 0;
-	cout<<"CheckResult is not implemented!"<<endl;
+	int compressed_idx = 0;
+
+	for (int row=0;row<FEATURE_CHUNK_PER_ROW;row++){
+		for (int col=0;col<FEATURE_CHUNK_PER_COL;col++){
+			int chunk_id = row*FEATURE_CHUNK_PER_COL+col;
+			for (int i=0;i<OUTPUT_CHANNEL_NUM;i++){
+				for (int k=0;k<FEATURES_COL_PER_CHUNK;k++){
+					for (int l=0;l<FEATURES_ROW_PER_CHUNK;l++){
+						for (int m=-KERNEL_SIZE/2;m<=KERNEL_SIZE/2;m++){
+							for (int n=-KERNEL_SIZE/2;n<=KERNEL_SIZE/2;n++){
+								temp += weights[i][j][m][n]*input_feature[j][k][l];
+							}
+						}
+					}
+				}
+				if (temp!=0){
+					while(output_feature[compressed_idx]==0)
+						compressed_idx++;
+					if (temp != output_feature[compressed_idx])
+						error_count ++;
+					compressed_idx++;
+				}
+			}
+		}
+	}
+
 	return error_count;
 }
 
@@ -232,8 +257,9 @@ int main(){
 	CompressWeights(INPUT_CHANNEL_NUM,OUTPUT_CHANNEL_NUM,WEIGHT_CHUNK_SIZE,KERNEL_SIZE);
 	CompressFeatureMap(INPUT_CHANNEL_NUM,FEATURE_WIDTH,FEATURE_HEIGHT,FEATURE_CHUNK_PER_COL,FEATURE_CHUNK_PER_ROW);
 
-	Accelerator(compressed_feature,feature_index,num_of_none_zero_features,compressed_weight,weight_index,
-			num_of_none_zero_weights,output_feature,output_index,num_of_none_zero_output_features);
+	Accelerator(compressed_feature,feature_index,num_of_none_zero_features,INPUT_CHANNEL_NUM,
+			compressed_weight,weight_index,num_of_none_zero_weights,KERNEL_SIZE,
+			output_feature,output_index,num_of_none_zero_output_features);
 
 	return CheckResults();
 }

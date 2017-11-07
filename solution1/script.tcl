@@ -4,8 +4,6 @@
 ## Copyright (C) 1986-2016 Xilinx, Inc. All Rights Reserved.
 ############################################################
 open_project SCNN
-add_files SCNN/MultiplyArray.cpp
-add_files SCNN/MultiplyArray.hpp
 add_files SCNN/ProcessElement.cpp
 add_files SCNN/ProcessElement.hpp
 add_files SCNN/fpga_top.cpp
