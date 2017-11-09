@@ -36,6 +36,8 @@ inline ocoord_type ProcessElement::GetOCoord(){
 inline xcoord_type ProcessElement::GetXCoord(){
 	offset_type wcol = GetOffsetInMatrix()%KERNEL_SIZE-KERNEL_SIZE/2;
 	xcoord_type xcoord = (total_features+num_of_processed_features-1)%FEATURES_COL_PER_CHUNK - wcol;
+	//if (!(xcoord>=-KERNEL_SIZE/2 && xcoord<FEATURES_COL_PER_CHUNK+KERNEL_SIZE/2))
+	//	cout<<"PE"<<(HORIZONTAL_FEATURE_CHUNK_NUM*row+col)<<": wcol="<<wcol<<" xcoord=("<<total_features<<"+"<<num_of_processed_features<<"-1)/"<<FEATURES_ROW_PER_CHUNK<<"-("<<wcol<<")="<<xcoord<<endl;
 	assert(xcoord>=-KERNEL_SIZE/2 && xcoord<FEATURES_ROW_PER_CHUNK+KERNEL_SIZE/2);
 	return xcoord;
 }
@@ -44,8 +46,8 @@ inline xcoord_type ProcessElement::GetXCoord(){
 inline ycoord_type ProcessElement::GetYCoord(){
 	offset_type wrow = GetOffsetInMatrix()/KERNEL_SIZE-KERNEL_SIZE/2;
 	ycoord_type ycoord = (total_features+num_of_processed_features-1)/FEATURES_COL_PER_CHUNK-wrow;
-	if (!(ycoord>=-KERNEL_SIZE/2 && ycoord<FEATURES_COL_PER_CHUNK+KERNEL_SIZE/2))
-		cout<<"wrow="<<wrow<<" ycoord=("<<total_features<<"+"<<num_of_processed_features<<"-1)/"<<FEATURES_COL_PER_CHUNK<<"-("<<wrow<<")="<<ycoord<<endl;
+	//if (!(ycoord>=-KERNEL_SIZE/2 && ycoord<FEATURES_COL_PER_CHUNK+KERNEL_SIZE/2))
+	//	cout<<"PE"<<(HORIZONTAL_FEATURE_CHUNK_NUM*row+col)<<": wrow="<<wrow<<" ycoord=("<<total_features<<"+"<<num_of_processed_features<<"-1)/"<<FEATURES_COL_PER_CHUNK<<"-("<<wrow<<")="<<ycoord<<endl;
 	assert(ycoord>=-KERNEL_SIZE/2 && ycoord<FEATURES_COL_PER_CHUNK+KERNEL_SIZE/2);
 	return ycoord;
 }
@@ -63,7 +65,7 @@ void ProcessElement::FetchNextIFeatureMap(){
 		stall = false;
 	}else{
 		stall = true;
-		cout<<"PE stalled"<<endl;
+		//cout<<"PE"<<(HORIZONTAL_FEATURE_CHUNK_NUM*row+col)<<" stalled: total features:"<<num_of_none_zero_feature_fetched<<endl;
 	}
 }
 

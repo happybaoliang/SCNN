@@ -155,16 +155,15 @@ static void CompressInputFeatureMap(){
 						int absolute_col = k*FEATURES_COL_PER_CHUNK+m;
 						feature_type feature = input_feature[i][absolute_row][absolute_col];
 						if (feature!=0){
-							compressed_input_feature_index[chunk_id][i][chunk_idx] = zero_count;
-							compressed_input_feature[chunk_id][i][chunk_idx] = feature;
-
+							compressed_input_feature_index[i][chunk_id][chunk_idx] = zero_count;
+							compressed_input_feature[i][chunk_id][chunk_idx] = feature;
 							chunk_idx = chunk_idx + 1;
 							zero_count = 0;
 						}else{
 							zero_count = zero_count + 1;
 							if (zero_count == MAX_ZERO_COUNT){
-								compressed_input_feature_index[chunk_id][i][chunk_idx] = zero_count;
-								compressed_input_feature[chunk_id][i][chunk_idx] = 0;
+								compressed_input_feature_index[i][chunk_id][chunk_idx] = zero_count;
+								compressed_input_feature[i][chunk_id][chunk_idx] = 0;
 								chunk_idx = chunk_idx + 1;
 								zero_count = 0;
 							}
@@ -172,12 +171,12 @@ static void CompressInputFeatureMap(){
 					}
 				}
 
-				num_of_none_zero_input_features[chunk_id][i] = chunk_idx;
+				num_of_none_zero_input_features[i][chunk_id] = chunk_idx;
 
-				while((num_of_none_zero_input_features[chunk_id][i]%I)!=0){
-					compressed_input_feature_index[chunk_id][i][chunk_idx] = 0;
-					compressed_input_feature[chunk_id][i][chunk_idx] = 0;
-					num_of_none_zero_input_features[chunk_id][i]++;
+				while((num_of_none_zero_input_features[i][chunk_id]%I)!=0){
+					compressed_input_feature_index[i][chunk_id][chunk_idx] = 0;
+					compressed_input_feature[i][chunk_id][chunk_idx] = 0;
+					num_of_none_zero_input_features[i][chunk_id]++;
 					cout<<"insert additional zero in feature"<<endl;
 					chunk_idx = chunk_idx + 1;
 				}
@@ -310,7 +309,6 @@ int main(){
 	CompressWeights();
 	CompressInputFeatureMap();
 
-	cout<<"multiple PE is not supported"<<endl;
 	cout<<"variable stride is not supported"<<endl;
 
 	for (int i=0;i<INPUT_CHANNEL_NUM;i++){
