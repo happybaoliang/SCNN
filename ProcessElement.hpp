@@ -4,44 +4,49 @@
 #include"cpu_top.hpp"
 
 
-#if 1
-typedef int xcoord_type;
-typedef int ycoord_type;
-typedef int ocoord_type;
-#else
-
-#endif
-
 struct ProcessElement{
-	int col;
-	int row;
-	int total_weights;
-	int total_features;
+	bool stall;
+	pe_coord_type col;
+	pe_coord_type row;
 	weight_type weight[F];
+	size_type total_weights;
 	xcoord_type GetXCoord();
 	ycoord_type GetYCoord();
 	ocoord_type GetOCoord();
-	int GetOffsetInMatrix();
+	size_type total_features;
 	void AccumulateProduct();
 	zeros_type weightindex[F];
-	int current_input_channel;
 	void FetchNextIFeatureMap();
 	feature_type feature_buf[I];
-	int num_of_weights_per_kernel;
+	offset_type GetOffsetInMatrix();
 	zeros_type feature_index_buf[I];
-	int num_of_none_zero_feature_fetched;
-	int num_of_none_zero_features[INPUT_CHANNEL_NUM];
+	channel_type current_input_channel;
+	size_type num_of_processed_weights;
+	size_type num_of_weights_per_kernel;
+	size_type num_of_processed_features;
+	void SetNextInputChannel(int channel);
+	size_type num_of_none_zero_feature_fetched;
+	size_type num_of_none_zero_features[INPUT_CHANNEL_NUM];
 	feature_type featuremap[INPUT_CHANNEL_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 	zeros_type featureindex[INPUT_CHANNEL_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 	feature_type accumulator[OUTPUT_CHANNEL_NUM][FEATURES_ROW_PER_CHUNK][FEATURES_COL_PER_CHUNK];
-	ProcessElement():col(0),row(0),total_weights(0),total_features(0),num_of_none_zero_feature_fetched(0){
+	ProcessElement():stall(false),total_weights(0),total_features(0),num_of_none_zero_feature_fetched(0){
+		col=0;
+		row=0;
+		current_input_channel=0;
+		num_of_processed_weights=0;
+		num_of_processed_features = 0;
 		num_of_weights_per_kernel = KERNEL_SIZE*KERNEL_SIZE;
 	}
-	void ResetProcessElement(int row_id, int col_id){
+	void ResetProcessElement(pe_coord_type row_id, pe_coord_type col_id){
 		col = col_id;
 		row = row_id;
+		stall = false;
 		total_weights = 0;
 		total_features = 0;
+		current_input_channel=0;
+		num_of_processed_weights=0;
+		num_of_processed_features = 0;
 		num_of_none_zero_feature_fetched = 0;
 		num_of_weights_per_kernel = KERNEL_SIZE*KERNEL_SIZE;
 	}

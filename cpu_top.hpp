@@ -2,8 +2,8 @@
 #define __CPU_TOP_H__
 
 
-#define F	27
-#define I	32
+#define F	3
+#define I	4
 
 
 #define CEIL_DIV(x,y)		(((x)+(y)-1)/(y))
@@ -24,8 +24,8 @@
 #define INPUT_FEATURE_WIDTH				1024
 #define INPUT_FEATURE_HEIGHT			1024
 
-#define OUTPUT_FEATURE_WIDTH			CEIL_DIV(INPUT_FEATURE_WIDTH+2*PADDING-KERNEL_SIZE,STRIDE)
-#define OUTPUT_FEATURE_HEIGHT			CEIL_DIV(INPUT_FEATURE_HEIGHT+2*PADDING-KERNEL_SIZE,STRIDE)
+#define OUTPUT_FEATURE_WIDTH			CEIL_DIV(INPUT_FEATURE_WIDTH+2*PADDING-KERNEL_SIZE+1,STRIDE)
+#define OUTPUT_FEATURE_HEIGHT			CEIL_DIV(INPUT_FEATURE_HEIGHT+2*PADDING-KERNEL_SIZE+1,STRIDE)
 
 #define HORIZONTAL_FEATURE_CHUNK_NUM	1
 #define VERTICAL_FEATURE_CHUNK_NUM		1
@@ -36,19 +36,25 @@
 
 #define NUM_OF_PEs						FEATURE_CHUNK_NUM
 
-#define WEIGHT_CHUNK_NUM				1
+#define WEIGHT_CHUNK_NUM				3
 #define WEIGHT_CHUNK_SIZE				(OUTPUT_CHANNEL_NUM/WEIGHT_CHUNK_NUM)
 #define MAX_NUM_OF_WEIGHTS_PER_CHUNK	(WEIGHT_CHUNK_SIZE*KERNEL_SIZE*KERNEL_SIZE)
 
 
 #if 1
-typedef float feature_type;
-typedef float weight_type;
-typedef int channel_type;
-typedef int size_type;
-typedef int index_type;
+typedef int feature_type;
+typedef int weight_type;
 typedef int zeros_type;
+typedef int size_type;
+typedef int offset_type;
+typedef int pe_coord_type;
+typedef int pe_id_type;
+typedef int channel_type;
+typedef int xcoord_type;
+typedef int ycoord_type;
+typedef int ocoord_type;
 #else
+
 #endif
 
 

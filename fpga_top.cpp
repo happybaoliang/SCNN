@@ -1,24 +1,28 @@
+#include<iostream>
 #include<cstring>
 #include<cassert>
 #include"fpga_top.hpp"
 #include"ProcessElement.hpp"
 
+using namespace std;
+
+
 struct ProcessElement PE[NUM_OF_PEs];
 
-static int max_num_of_none_zero_features[INPUT_CHANNEL_NUM]={0};
+static size_type max_num_of_none_zero_features[INPUT_CHANNEL_NUM]={0};
 
-static int num_of_weights_per_chunk[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM];
+static size_type num_of_weights_per_chunk[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM];
 static zeros_type zeros[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
 static weight_type weight[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
 
-extern int num_of_none_zero_output_features[OUTPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM];
+extern size_type num_of_none_zero_output_features[OUTPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM];
 extern feature_type compressed_output_feature[OUTPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 extern zeros_type compressed_output_feature_index[OUTPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 
 
 static inline void LoadFeatureMapForPEs(feature_type compressed_input_feature[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK],
 				zeros_type compressed_input_feature_index[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK],
-				int num_of_none_zero_input_features[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM]){
+				size_type num_of_none_zero_input_features[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM]){
 	for (int i=0;i<INPUT_CHANNEL_NUM;i++){
 		for (int j=0;j<NUM_OF_PEs;j++){
 			PE[j].num_of_none_zero_features[i]=num_of_none_zero_input_features[i][j];
@@ -31,7 +35,7 @@ static inline void LoadFeatureMapForPEs(feature_type compressed_input_feature[IN
 
 static inline void LoadCompressedWeights(weight_type compressed_weight[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK],
 		zeros_type compressed_weight_index[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK],
-		int num_of_none_zero_weights[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM]){
+		size_type num_of_none_zero_weights[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM]){
 	for (int i=0;i<INPUT_CHANNEL_NUM;i++){
 		for (int j=0;j<WEIGHT_CHUNK_NUM;j++){
 			num_of_weights_per_chunk[i][j] = num_of_none_zero_weights[i][j];
@@ -43,6 +47,7 @@ static inline void LoadCompressedWeights(weight_type compressed_weight[INPUT_CHA
 
 
 static inline void BroadcastWeights(weight_type weights[F], zeros_type index[F]){
+	//cout<<"broadcast F weights"<<endl;
 	for (int i=0;i<NUM_OF_PEs;i++){
 		memcpy(PE[i].weight,weights,F*sizeof(weight_type));
 		memcpy(PE[i].weightindex,index,F*sizeof(zeros_type));
@@ -57,9 +62,10 @@ static inline void AccumulateProduct(){
 }
 
 
-static inline void SetCurrentInputChannel(int channel){
+static inline void SetNextInputChannel(channel_type channel){
+	//cout<<"next channel:"<<channel<<endl;
 	for (int i=0;i<NUM_OF_PEs;i++){
-		PE[i].current_input_channel = channel;
+		PE[i].SetNextInputChannel(channel);
 	}
 }
 
@@ -94,15 +100,16 @@ static void CollectAndCompressResults(){
 
 
 static void inline FetchNextIFeatureMap(){
+	//cout<<"fetch next I featuremap"<<endl;
 	for (int i=0;i<NUM_OF_PEs;i++){
 		PE[i].FetchNextIFeatureMap();
 	}
 }
 
 
-static void inline ResetAllPE(){
-	for (int i=0;i<VERTICAL_FEATURE_CHUNK_NUM;i++){
-		for (int j=0;j<HORIZONTAL_FEATURE_CHUNK_NUM;j++){
+static void inline ResetAllProcessElement(){
+	for (pe_coord_type i=0;i<VERTICAL_FEATURE_CHUNK_NUM;i++){
+		for (pe_coord_type j=0;j<HORIZONTAL_FEATURE_CHUNK_NUM;j++){
 			PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].ResetProcessElement(i,j);
 		}
 	}
@@ -111,19 +118,19 @@ static void inline ResetAllPE(){
 
 int Accelerator(feature_type compressed_input_feature[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK],
 				zeros_type compressed_input_feature_index[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK],
-				int num_of_none_zero_input_features[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM],
-				int max_none_zero_features[INPUT_CHANNEL_NUM],
+				size_type num_of_none_zero_input_features[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM],
+				size_type max_none_zero_features[INPUT_CHANNEL_NUM],
 				weight_type compressed_weight[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK],
 				zeros_type compressed_weight_index[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK],
-				int num_of_none_zero_weights[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM],
+				size_type num_of_none_zero_weights[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM],
 				feature_type compressed_output_feature[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK],
 				zeros_type output_index[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK],
-				int num_of_none_zero_output_features[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM]){
+				size_type num_of_none_zero_output_features[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM]){
 
 	zeros_type index_buf[F];
 	weight_type weight_buf[F];
 
-	ResetAllPE();
+	ResetAllProcessElement();
 
 	memcpy(max_num_of_none_zero_features,max_none_zero_features,INPUT_CHANNEL_NUM*sizeof(int));
 
@@ -132,13 +139,13 @@ int Accelerator(feature_type compressed_input_feature[INPUT_CHANNEL_NUM][FEATURE
 	LoadFeatureMapForPEs(compressed_input_feature,compressed_input_feature_index,num_of_none_zero_input_features);
 
 	for (int i=0;i<WEIGHT_CHUNK_NUM;i++){
-		for (int j=0;j<INPUT_CHANNEL_NUM;j++){
-			SetCurrentInputChannel(j);
-			for (int l=0;l<max_num_of_none_zero_features[j];l+=I){
+		for (channel_type j=0;j<INPUT_CHANNEL_NUM;j++){
+			SetNextInputChannel(j);
+			for(int k=0;k<max_num_of_none_zero_features[j];k+=I){
 				FetchNextIFeatureMap();
-				for (int k=0;k<num_of_weights_per_chunk[j][i];k+=F){
-					memcpy(weight_buf,weight[j][i]+k,sizeof(weight_type)*F);
-					memcpy(index_buf,zeros[j][i]+k,sizeof(zeros_type)*F);
+				for (int l=0;l<num_of_weights_per_chunk[j][i];l+=F){
+					memcpy(weight_buf,weight[j][i]+l,sizeof(weight_type)*F);
+					memcpy(index_buf,zeros[j][i]+l,sizeof(zeros_type)*F);
 					BroadcastWeights(weight_buf,index_buf);
 					AccumulateProduct();
 				}
