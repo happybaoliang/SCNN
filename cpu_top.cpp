@@ -12,6 +12,7 @@ using namespace std;
 
 static weight_type weights[INPUT_CHANNEL_NUM][OUTPUT_CHANNEL_NUM][KERNEL_SIZE][KERNEL_SIZE];
 
+static int max_none_zero_features[INPUT_CHANNEL_NUM]={0};
 static int num_of_none_zero_weights[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM] = {0};
 static weight_type compressed_weight[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
 static zeros_type compressed_weight_index[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
@@ -157,14 +158,14 @@ static void CompressInputFeatureMap(){
 							compressed_input_feature_index[chunk_id][i][chunk_idx] = zero_count;
 							compressed_input_feature[chunk_id][i][chunk_idx] = feature;
 
-							chunk_idx = chunk_idx + chunk_idx;
+							chunk_idx = chunk_idx + 1;
 							zero_count = 0;
 						}else{
 							zero_count = zero_count + 1;
 							if (zero_count == MAX_ZERO_COUNT){
 								compressed_input_feature_index[chunk_id][i][chunk_idx] = zero_count;
 								compressed_input_feature[chunk_id][i][chunk_idx] = 0;
-								chunk_idx = chunk_idx + chunk_idx;
+								chunk_idx = chunk_idx + 1;
 								zero_count = 0;
 							}
 						}
@@ -177,7 +178,7 @@ static void CompressInputFeatureMap(){
 					compressed_input_feature_index[chunk_id][i][chunk_idx] = 0;
 					compressed_input_feature[chunk_id][i][chunk_idx] = 0;
 					num_of_none_zero_input_features[chunk_id][i]++;
-					chunk_idx = chunk_idx + chunk_idx;
+					chunk_idx = chunk_idx + 1;
 				}
 			}
 		}
@@ -196,7 +197,6 @@ static void CompressWeights(){
 						if (weights[i][j*WEIGHT_CHUNK_SIZE+k][l][m]!=0){
 							compressed_weight[i][j][chunk_idx] = weights[i][j*WEIGHT_CHUNK_SIZE+k][l][m];
 							compressed_weight_index[i][j][chunk_idx] = zero_count;
-
 							chunk_idx = chunk_idx + 1;
 							zero_count = 0;
 						}else{
@@ -213,7 +213,6 @@ static void CompressWeights(){
 			}
 
 			num_of_none_zero_weights[i][j] = chunk_idx;
-
 			while((num_of_none_zero_weights[i][j]%F)!=0){
 				compressed_weight_index[i][j][chunk_idx] = 0;
 				compressed_weight[i][j][chunk_idx] = 0;
@@ -302,9 +301,20 @@ int main(){
 	CompressWeights();
 	CompressInputFeatureMap();
 
+	for (int i=0;i<INPUT_CHANNEL_NUM;i++){
+		for (int j=0;j<FEATURE_CHUNK_NUM;j++){
+			if (num_of_none_zero_input_features[i][j]>max_none_zero_features[i]){
+				max_none_zero_features[i] = num_of_none_zero_input_features[i][j];
+			}
+		}
+	}
+
+	cout<<"more assertion can be added."<<endl;
+	cout<<"data type in Accelerator can be optimized"<<endl;
+
 	Accelerator(compressed_input_feature,compressed_input_feature_index,num_of_none_zero_input_features,
-			compressed_weight,compressed_weight_index,num_of_none_zero_weights,compressed_output_feature,
-			compressed_output_feature_index,num_of_none_zero_output_features);
+			max_none_zero_features,compressed_weight,compressed_weight_index,num_of_none_zero_weights,
+			compressed_output_feature,compressed_output_feature_index,num_of_none_zero_output_features);
 
 	DeCompressOutputFeatureMap();
 

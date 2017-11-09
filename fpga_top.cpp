@@ -3,8 +3,9 @@
 #include"fpga_top.hpp"
 #include"ProcessElement.hpp"
 
+struct ProcessElement PE[NUM_OF_PEs];
 
-static struct ProcessElement PE[NUM_OF_PEs];
+static int max_num_of_none_zero_features[INPUT_CHANNEL_NUM]={0};
 
 static int num_of_weights_per_chunk[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM];
 static zeros_type zeros[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
@@ -70,8 +71,8 @@ static void CollectAndCompressResults(){
 			int zero_count = 0;
 			for (int k=0;k<FEATURES_ROW_PER_CHUNK;k++){
 				for (int l=0;l<FEATURES_COL_PER_CHUNK;l++){
-					if (PE[i].accumulaor[j][k][l]){
-						compressed_output_feature[j][i][chunk_idx]=PE[i].accumulaor[j][k][l];
+					if (PE[i].accumulator[j][k][l]){
+						compressed_output_feature[j][i][chunk_idx]=PE[i].accumulator[j][k][l];
 						compressed_output_feature_index[j][i][chunk_idx] = zero_count;
 						chunk_idx = chunk_idx + 1;
 						zero_count = 0;
@@ -92,9 +93,26 @@ static void CollectAndCompressResults(){
 }
 
 
+static void inline FetchNextIFeatureMap(){
+	for (int i=0;i<NUM_OF_PEs;i++){
+		PE[i].FetchNextIFeatureMap();
+	}
+}
+
+
+static void inline ResetAllPE(){
+	for (int i=0;i<VERTICAL_FEATURE_CHUNK_NUM;i++){
+		for (int j=0;j<HORIZONTAL_FEATURE_CHUNK_NUM;j++){
+			PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].ResetProcessElement(i,j);
+		}
+	}
+}
+
+
 int Accelerator(feature_type compressed_input_feature[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK],
 				zeros_type compressed_input_feature_index[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK],
 				int num_of_none_zero_input_features[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM],
+				int max_none_zero_features[INPUT_CHANNEL_NUM],
 				weight_type compressed_weight[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK],
 				zeros_type compressed_weight_index[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK],
 				int num_of_none_zero_weights[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM],
@@ -105,6 +123,10 @@ int Accelerator(feature_type compressed_input_feature[INPUT_CHANNEL_NUM][FEATURE
 	zeros_type index_buf[F];
 	weight_type weight_buf[F];
 
+	ResetAllPE();
+
+	memcpy(max_num_of_none_zero_features,max_none_zero_features,INPUT_CHANNEL_NUM*sizeof(int));
+
 	LoadCompressedWeights(compressed_weight,compressed_weight_index,num_of_none_zero_weights);
 
 	LoadFeatureMapForPEs(compressed_input_feature,compressed_input_feature_index,num_of_none_zero_input_features);
@@ -112,11 +134,14 @@ int Accelerator(feature_type compressed_input_feature[INPUT_CHANNEL_NUM][FEATURE
 	for (int i=0;i<WEIGHT_CHUNK_NUM;i++){
 		for (int j=0;j<INPUT_CHANNEL_NUM;j++){
 			SetCurrentInputChannel(j);
-			for (int k=0;k<num_of_weights_per_chunk[j][i];k+=F){
-				memcpy(weight_buf,weight[j][i]+k,sizeof(weight_type)*F);
-				memcpy(index_buf,zeros[j][i]+k,sizeof(zeros_type)*F);
-				BroadcastWeights(weight_buf,index_buf);
-				AccumulateProduct();
+			for (int l=0;l<max_num_of_none_zero_features[j];l+=I){
+				FetchNextIFeatureMap();
+				for (int k=0;k<num_of_weights_per_chunk[j][i];k+=F){
+					memcpy(weight_buf,weight[j][i]+k,sizeof(weight_type)*F);
+					memcpy(index_buf,zeros[j][i]+k,sizeof(zeros_type)*F);
+					BroadcastWeights(weight_buf,index_buf);
+					AccumulateProduct();
+				}
 			}
 		}
 		CollectAndCompressResults();
