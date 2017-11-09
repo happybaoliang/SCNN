@@ -31,8 +31,8 @@ static feature_type decompressed_output_feature[INPUT_CHANNEL_NUM][INPUT_FEATURE
 
 
 static inline int GetRandomNumber(int max_val){
-	return rand()%max_val;
-	//return 1;
+	//return rand()%max_val;
+	return 1;
 }
 
 
@@ -279,7 +279,7 @@ static int CheckDeCompressedConvolutionResults(){
 					cout<<decompressed_output_feature[i][k][l]<<endl;
 					error_count ++;
 				}else{
-					//cout<<"["<<i<<"]["<<k<<"]["<<l<<"]: "<<temp<<endl;
+					cout<<"["<<i<<"]["<<k<<"]["<<l<<"]: "<<temp<<endl;
 				}
 			}
 		}
@@ -294,6 +294,8 @@ int main(){
 	assert((MAX_NUM_OF_FEATURE_PER_CHUNK%I)==0);
 	assert((MAX_NUM_OF_WEIGHTS_PER_CHUNK%F)==0);
 	assert((OUTPUT_CHANNEL_NUM%WEIGHT_CHUNK_NUM)==0);
+	assert((INPUT_FEATURE_HEIGHT%VERTICAL_FEATURE_CHUNK_NUM)==0);
+	assert((INPUT_FEATURE_WIDTH%HORIZONTAL_FEATURE_CHUNK_NUM)==0);
 
 #if 1
 	GenerateRandomWeight();
@@ -307,6 +309,9 @@ int main(){
 
 	CompressWeights();
 	CompressInputFeatureMap();
+
+	cout<<"multiple PE is not supported"<<endl;
+	cout<<"variable stride is not supported"<<endl;
 
 	for (int i=0;i<INPUT_CHANNEL_NUM;i++){
 		for (int j=0;j<FEATURE_CHUNK_NUM;j++){

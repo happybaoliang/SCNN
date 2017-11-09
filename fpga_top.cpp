@@ -70,30 +70,32 @@ static inline void SetNextInputChannel(channel_type channel){
 }
 
 
-static void CollectAndCompressResults(){
+static void CollectAndCompressResults(size_type chunk){
 	for(int i=0;i<NUM_OF_PEs;i++){
-		for(int j=0;j<OUTPUT_CHANNEL_NUM;j++){
-			int chunk_idx = 0;
-			int zero_count = 0;
+		for(int j=0;j<WEIGHT_CHUNK_SIZE;j++){
+			size_type chunk_idx = 0;
+			size_type zero_count = 0;
+			channel_type out = chunk*WEIGHT_CHUNK_SIZE+j;
 			for (int k=0;k<FEATURES_ROW_PER_CHUNK;k++){
 				for (int l=0;l<FEATURES_COL_PER_CHUNK;l++){
 					if (PE[i].accumulator[j][k][l]){
-						compressed_output_feature[j][i][chunk_idx]=PE[i].accumulator[j][k][l];
-						compressed_output_feature_index[j][i][chunk_idx] = zero_count;
+						compressed_output_feature[out][i][chunk_idx]=PE[i].accumulator[j][k][l];
+						compressed_output_feature_index[out][i][chunk_idx] = zero_count;
 						chunk_idx = chunk_idx + 1;
 						zero_count = 0;
 					}else{
 						zero_count = zero_count + 1;
 						if (zero_count==MAX_ZERO_COUNT){
-							compressed_output_feature_index[j][i][chunk_idx] = zero_count;
-							compressed_output_feature[j][i][chunk_idx] = 0;
+							compressed_output_feature_index[out][i][chunk_idx] = zero_count;
+							compressed_output_feature[out][i][chunk_idx] = 0;
 							chunk_idx = chunk_idx + 1;
 							zero_count = 0;
 						}
 					}
+					PE[i].accumulator[j][k][l]=0;
 				}
 			}
-			num_of_none_zero_output_features[j][i] = chunk_idx;
+			num_of_none_zero_output_features[out][i] = chunk_idx;
 		}
 	}
 }
@@ -138,12 +140,12 @@ int Accelerator(feature_type compressed_input_feature[INPUT_CHANNEL_NUM][FEATURE
 
 	LoadFeatureMapForPEs(compressed_input_feature,compressed_input_feature_index,num_of_none_zero_input_features);
 
-	for (int i=0;i<WEIGHT_CHUNK_NUM;i++){
+	for (size_type i=0;i<WEIGHT_CHUNK_NUM;i++){
 		for (channel_type j=0;j<INPUT_CHANNEL_NUM;j++){
 			SetNextInputChannel(j);
-			for(int k=0;k<max_num_of_none_zero_features[j];k+=I){
+			for(size_type k=0;k<max_num_of_none_zero_features[j];k+=I){
 				FetchNextIFeatureMap();
-				for (int l=0;l<num_of_weights_per_chunk[j][i];l+=F){
+				for (size_type l=0;l<num_of_weights_per_chunk[j][i];l+=F){
 					memcpy(weight_buf,weight[j][i]+l,sizeof(weight_type)*F);
 					memcpy(index_buf,zeros[j][i]+l,sizeof(zeros_type)*F);
 					BroadcastWeights(weight_buf,index_buf);
@@ -151,7 +153,7 @@ int Accelerator(feature_type compressed_input_feature[INPUT_CHANNEL_NUM][FEATURE
 				}
 			}
 		}
-		CollectAndCompressResults();
+		CollectAndCompressResults(i);
 	}
 
 	return 0;
