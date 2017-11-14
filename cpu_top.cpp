@@ -31,8 +31,8 @@ static feature_type decompressed_output_feature[INPUT_CHANNEL_NUM][INPUT_FEATURE
 
 
 static inline int GetRandomNumber(int max_val){
-	//return rand()%max_val;
-	return 1;
+	return rand()%max_val;
+	//return 1;
 }
 
 
@@ -177,7 +177,7 @@ static void CompressInputFeatureMap(){
 					compressed_input_feature_index[i][chunk_id][chunk_idx] = 0;
 					compressed_input_feature[i][chunk_id][chunk_idx] = 0;
 					num_of_none_zero_input_features[i][chunk_id]++;
-					cout<<"insert additional zero in feature"<<endl;
+					cout<<"insert zero in feature: ["<<i<<"]["<<j<<"]["<<k<<"]"<<endl;
 					chunk_idx = chunk_idx + 1;
 				}
 			}
@@ -217,7 +217,7 @@ static void CompressWeights(){
 				compressed_weight_index[i][j][chunk_idx] = 0;
 				compressed_weight[i][j][chunk_idx] = 0;
 				num_of_none_zero_weights[i][j] ++;
-				cout<<"insert zero in weights"<<endl;
+				cout<<"insert zero in weights:"<<i<<endl;
 				chunk_idx = chunk_idx + 1;
 			}
 		}
@@ -278,7 +278,7 @@ static int CheckDeCompressedConvolutionResults(){
 					cout<<decompressed_output_feature[i][k][l]<<endl;
 					error_count ++;
 				}else{
-					cout<<"["<<i<<"]["<<k<<"]["<<l<<"]: "<<temp<<endl;
+					//cout<<"["<<i<<"]["<<k<<"]["<<l<<"]: "<<temp<<endl;
 				}
 			}
 		}
