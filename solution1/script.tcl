@@ -4,6 +4,8 @@
 ## Copyright (C) 1986-2016 Xilinx, Inc. All Rights Reserved.
 ############################################################
 open_project SCNN
+add_files SCNN/accumulator_bank.cpp
+add_files SCNN/accumulator_bank.hpp
 add_files SCNN/arbiter.cpp
 add_files SCNN/arbiter.hpp
 add_files SCNN/fpga_top.cpp

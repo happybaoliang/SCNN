@@ -2,6 +2,7 @@
 #include<cassert>
 #include<cstring>
 #include<cmath>
+
 #include"process_element.hpp"
 
 using namespace std;
@@ -33,9 +34,9 @@ inline ocoord_type ProcessElement::GetOCoord(){
 }
 
 
-inline xcoord_type ProcessElement::GetXCoord(){
+inline col_coord_type ProcessElement::GetColCoord(){
 	offset_type wcol = GetOffsetInMatrix()%KERNEL_SIZE-KERNEL_SIZE/2;
-	xcoord_type xcoord = (total_features+num_of_processed_features-1)%FEATURES_COL_PER_CHUNK - wcol;
+	col_coord_type xcoord = (total_features+num_of_processed_features-1)%FEATURES_COL_PER_CHUNK - wcol;
 	//if (!(xcoord>=-KERNEL_SIZE/2 && xcoord<FEATURES_COL_PER_CHUNK+KERNEL_SIZE/2))
 	//	cout<<"PE"<<(HORIZONTAL_FEATURE_CHUNK_NUM*row+col)<<": wcol="<<wcol<<" xcoord=("<<total_features<<"+"<<num_of_processed_features<<"-1)/"<<FEATURES_ROW_PER_CHUNK<<"-("<<wcol<<")="<<xcoord<<endl;
 	assert(xcoord>=-KERNEL_SIZE/2 && xcoord<FEATURES_ROW_PER_CHUNK+KERNEL_SIZE/2);
@@ -43,9 +44,9 @@ inline xcoord_type ProcessElement::GetXCoord(){
 }
 
 
-inline ycoord_type ProcessElement::GetYCoord(){
+inline row_coord_type ProcessElement::GetRowCoord(){
 	offset_type wrow = GetOffsetInMatrix()/KERNEL_SIZE-KERNEL_SIZE/2;
-	ycoord_type ycoord = (total_features+num_of_processed_features-1)/FEATURES_COL_PER_CHUNK-wrow;
+	row_coord_type ycoord = (total_features+num_of_processed_features-1)/FEATURES_COL_PER_CHUNK-wrow;
 	//if (!(ycoord>=-KERNEL_SIZE/2 && ycoord<FEATURES_COL_PER_CHUNK+KERNEL_SIZE/2))
 	//	cout<<"PE"<<(HORIZONTAL_FEATURE_CHUNK_NUM*row+col)<<": wrow="<<wrow<<" ycoord=("<<total_features<<"+"<<num_of_processed_features<<"-1)/"<<FEATURES_COL_PER_CHUNK<<"-("<<wrow<<")="<<ycoord<<endl;
 	assert(ycoord>=-KERNEL_SIZE/2 && ycoord<FEATURES_COL_PER_CHUNK+KERNEL_SIZE/2);
@@ -81,44 +82,44 @@ void ProcessElement::AccumulateProduct(){
 			if (weight[j]==0 || feature_buf[i]==0){
 				continue;
 			}
-			xcoord_type xcoord = GetXCoord();
-			ycoord_type ycoord = GetYCoord();
+			col_coord_type col_coord = GetColCoord();
+			row_coord_type row_coord = GetRowCoord();
 			ocoord_type ocoord = GetOCoord();
-			feature_type product=weight[j]*feature_buf[i];
+			product_type product=weight[j]*feature_buf[i];
 			assert(ocoord>=0 && ocoord<OUTPUT_CHANNEL_NUM);
 			pe_coord_type col_id = col;
 			pe_coord_type row_id = row;
-			if (xcoord<0){
+			if (col_coord<0){
 				col_id = col_id -1;
-			}else if (xcoord>=FEATURES_ROW_PER_CHUNK){
+			}else if (col_coord>=FEATURES_ROW_PER_CHUNK){
 				col_id = col_id + 1;
 			}
 			//cout<<"col:"<<col<<"->"<<col_id<<endl;
 			if (col_id<0||col_id>=VERTICAL_FEATURE_CHUNK_NUM){
 				continue;
 			}
-			//cout<<"xcoord:"<<xcoord;
-			xcoord = (xcoord + FEATURES_COL_PER_CHUNK)%FEATURES_COL_PER_CHUNK;
-			assert(xcoord>=0 && xcoord <FEATURES_COL_PER_CHUNK);
-			//cout<<"->"<<xcoord<<endl;
+			//cout<<"col_coord:"<<col_coord;
+			col_coord = (col_coord + FEATURES_COL_PER_CHUNK)%FEATURES_COL_PER_CHUNK;
+			assert(col_coord>=0 && col_coord <FEATURES_COL_PER_CHUNK);
+			//cout<<"->"<<col_coord<<endl;
 
-			if(ycoord<0){
+			if(row_coord<0){
 				row_id = row_id - 1;
-			}else if(ycoord>=FEATURES_COL_PER_CHUNK){
+			}else if(row_coord>=FEATURES_COL_PER_CHUNK){
 				row_id = row_id + 1;
 			}
 			if (row_id<0||row_id>=HORIZONTAL_FEATURE_CHUNK_NUM){
 				continue;
 			}
 			//cout<<"row:"<<row<<"->"<<row_id<<endl;
-			//cout<<"ycoord:"<<ycoord;
-			ycoord = (ycoord + FEATURES_ROW_PER_CHUNK)%FEATURES_ROW_PER_CHUNK;
-			assert(ycoord>=0 && ycoord <FEATURES_ROW_PER_CHUNK);
-			//cout<<"->"<<ycoord<<endl;
+			//cout<<"row_coord:"<<row_coord;
+			row_coord = (row_coord + FEATURES_ROW_PER_CHUNK)%FEATURES_ROW_PER_CHUNK;
+			assert(row_coord>=0 && row_coord <FEATURES_ROW_PER_CHUNK);
+			//cout<<"->"<<row_coord<<endl;
 			pe_id_type dest_pe = row_id*HORIZONTAL_FEATURE_CHUNK_NUM+col_id;
 			assert(dest_pe>=0 && dest_pe<NUM_OF_PEs);
 			//cout<<"pe:"<<(row*HORIZONTAL_FEATURE_CHUNK_NUM+col)<<"->"<<dest_pe<<endl;
-			PE[dest_pe].accumulator[ocoord][ycoord][xcoord] += product;
+			PE[dest_pe].accumulator[ocoord].adder(row_coord, col_coord, product);
 		}
 	}
 	total_weights += num_of_processed_weights;

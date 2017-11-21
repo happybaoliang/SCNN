@@ -1,6 +1,8 @@
 #ifndef __CPU_TOP_H__
 #define __CPU_TOP_H__
 
+#include<ap_int.h>
+
 
 //固定IF乘积为３６以后，所有可能的方案中最节省bank的方式是4 x 9或者6 x 6，这两种方案每个PE存储feature和w所用的总bank数为６。
 #define F	9
@@ -22,8 +24,8 @@
 #define MAX_WEIGHT_VALUE				256
 
 #define MAX_FEATURE_VALUE				256
-#define INPUT_FEATURE_WIDTH				1024
-#define INPUT_FEATURE_HEIGHT			1024
+#define INPUT_FEATURE_WIDTH				64
+#define INPUT_FEATURE_HEIGHT			64
 
 #define OUTPUT_FEATURE_WIDTH			CEIL_DIV(INPUT_FEATURE_WIDTH+2*PADDING-KERNEL_SIZE+1,STRIDE)
 #define OUTPUT_FEATURE_HEIGHT			CEIL_DIV(INPUT_FEATURE_HEIGHT+2*PADDING-KERNEL_SIZE+1,STRIDE)
@@ -52,9 +54,10 @@ typedef int offset_type;
 typedef int pe_coord_type;
 typedef int pe_id_type;
 typedef int channel_type;
-typedef int xcoord_type;
-typedef int ycoord_type;
+typedef int col_coord_type;
+typedef int row_coord_type;
 typedef int ocoord_type;
+typedef ap_int<63> product_type;
 #else
 
 #endif

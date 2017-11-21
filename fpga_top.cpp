@@ -1,6 +1,7 @@
 #include<iostream>
 #include<cstring>
 #include<cassert>
+
 #include"fpga_top.hpp"
 #include"process_element.hpp"
 
@@ -78,9 +79,10 @@ static void CollectAndCompressResults(size_type chunk){
 			channel_type out = chunk*OUTPUT_CHANNEL_CHUNK_SIZE+j;
 			for (int k=0;k<FEATURES_ROW_PER_CHUNK;k++){
 				for (int l=0;l<FEATURES_COL_PER_CHUNK;l++){
-					if (PE[i].accumulator[j][k][l]){
-						compressed_output_feature[out][i][chunk_idx]=PE[i].accumulator[j][k][l];
+					product_type product = PE[i].accumulator[j].get_and_clear(k,l);
+					if (product){
 						compressed_output_feature_index[out][i][chunk_idx] = zero_count;
+						compressed_output_feature[out][i][chunk_idx]=product;
 						chunk_idx = chunk_idx + 1;
 						zero_count = 0;
 					}else{
@@ -92,7 +94,6 @@ static void CollectAndCompressResults(size_type chunk){
 							zero_count = 0;
 						}
 					}
-					PE[i].accumulator[j][k][l]=0;
 				}
 			}
 			num_of_none_zero_output_features[out][i] = chunk_idx;
