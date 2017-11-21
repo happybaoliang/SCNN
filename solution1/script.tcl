@@ -4,10 +4,12 @@
 ## Copyright (C) 1986-2016 Xilinx, Inc. All Rights Reserved.
 ############################################################
 open_project SCNN
-add_files SCNN/ProcessElement.cpp
-add_files SCNN/ProcessElement.hpp
+add_files SCNN/arbiter.cpp
+add_files SCNN/arbiter.hpp
 add_files SCNN/fpga_top.cpp
 add_files SCNN/fpga_top.hpp
+add_files SCNN/process_element.cpp
+add_files SCNN/process_element.hpp
 add_files -tb SCNN/cpu_top.cpp
 add_files -tb SCNN/cpu_top.hpp
 add_files -tb SCNN/feature.bin

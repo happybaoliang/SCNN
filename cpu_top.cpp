@@ -13,9 +13,9 @@ using namespace std;
 static weight_type weights[INPUT_CHANNEL_NUM][OUTPUT_CHANNEL_NUM][KERNEL_SIZE][KERNEL_SIZE];
 
 static size_type max_none_zero_features[INPUT_CHANNEL_NUM]={0};
-static size_type num_of_none_zero_weights[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM] = {0};
-static weight_type compressed_weight[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
-static zeros_type compressed_weight_index[INPUT_CHANNEL_NUM][WEIGHT_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
+static size_type num_of_none_zero_weights[INPUT_CHANNEL_NUM][OUTPUT_CHANNEL_CHUNK_NUM] = {0};
+static weight_type compressed_weight[INPUT_CHANNEL_NUM][OUTPUT_CHANNEL_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
+static zeros_type compressed_weight_index[INPUT_CHANNEL_NUM][OUTPUT_CHANNEL_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
 
 static feature_type input_feature[INPUT_CHANNEL_NUM][INPUT_FEATURE_HEIGHT][INPUT_FEATURE_WIDTH];
 
@@ -188,14 +188,14 @@ static void CompressInputFeatureMap(){
 
 static void CompressWeights(){
 	for (int i=0;i<INPUT_CHANNEL_NUM;i++){
-		for (int j=0;j<WEIGHT_CHUNK_NUM;j++){
+		for (int j=0;j<OUTPUT_CHANNEL_CHUNK_NUM;j++){
 			int chunk_idx = 0;
 			int zero_count = 0;
-			for (int k=0;k<WEIGHT_CHUNK_SIZE;k++){
+			for (int k=0;k<OUTPUT_CHANNEL_CHUNK_SIZE;k++){
 				for (int l=0;l<KERNEL_SIZE;l++){
 					for (int m=0;m<KERNEL_SIZE;m++){
-						if (weights[i][j*WEIGHT_CHUNK_SIZE+k][l][m]!=0){
-							compressed_weight[i][j][chunk_idx] = weights[i][j*WEIGHT_CHUNK_SIZE+k][l][m];
+						if (weights[i][j*OUTPUT_CHANNEL_CHUNK_SIZE+k][l][m]!=0){
+							compressed_weight[i][j][chunk_idx] = weights[i][j*OUTPUT_CHANNEL_CHUNK_SIZE+k][l][m];
 							compressed_weight_index[i][j][chunk_idx] = zero_count;
 							chunk_idx = chunk_idx + 1;
 							zero_count = 0;
@@ -292,7 +292,7 @@ int main(){
 	srand((unsigned)time(NULL));
 	assert((MAX_NUM_OF_FEATURE_PER_CHUNK%I)==0);
 	assert((MAX_NUM_OF_WEIGHTS_PER_CHUNK%F)==0);
-	assert((OUTPUT_CHANNEL_NUM%WEIGHT_CHUNK_NUM)==0);
+	assert((OUTPUT_CHANNEL_NUM%OUTPUT_CHANNEL_CHUNK_NUM)==0);
 	assert((INPUT_FEATURE_HEIGHT%VERTICAL_FEATURE_CHUNK_NUM)==0);
 	assert((INPUT_FEATURE_WIDTH%HORIZONTAL_FEATURE_CHUNK_NUM)==0);
 

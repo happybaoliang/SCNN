@@ -29,7 +29,7 @@ struct ProcessElement{
 	size_type num_of_none_zero_features[INPUT_CHANNEL_NUM];
 	feature_type featuremap[INPUT_CHANNEL_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 	zeros_type featureindex[INPUT_CHANNEL_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
-	feature_type accumulator[WEIGHT_CHUNK_SIZE][FEATURES_ROW_PER_CHUNK][FEATURES_COL_PER_CHUNK];
+	feature_type accumulator[OUTPUT_CHANNEL_CHUNK_SIZE][FEATURES_ROW_PER_CHUNK][FEATURES_COL_PER_CHUNK];
 	ProcessElement():stall(false),total_weights(0),total_features(0),num_of_none_zero_feature_fetched(0){
 		col=0;
 		row=0;
