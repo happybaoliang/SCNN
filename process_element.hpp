@@ -13,11 +13,13 @@ struct ProcessElement{
 	pe_coord_type row;
 	weight_type weight[F];
 	struct accumulator acc;
+	void DrainOutProducts();
 	size_type total_weights;
 	ocoord_type GetOCoord();
 	size_type total_features;
 	void AccumulateProduct();
 	zeros_type weightindex[F];
+	bool is_input_queue_empty;
 	void FetchNextIFeatureMap();
 	feature_type feature_buf[I];
 	col_coord_type GetColCoord();

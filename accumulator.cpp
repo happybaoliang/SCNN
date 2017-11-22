@@ -6,8 +6,8 @@ void accumulator::reset(){
 }
 
 
-void accumulator::queueing(hls::stream<Flit> (&products)[F][I],hls::stream<Flit>* input_halos[NUM_OF_PORTS]){
-	cxb.queueing(products,input_halos);
+bool accumulator::queueing(hls::stream<Flit> (&products)[F][I],hls::stream<Flit>* input_halos[NUM_OF_PORTS]){
+	return cxb.queueing(products,input_halos);
 }
 
 

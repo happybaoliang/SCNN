@@ -76,7 +76,16 @@ static inline void SetNextInputChannel(channel_type channel){
 }
 
 
+static void DrainOutProducts(){
+	for (int i=0;i<NUM_OF_PEs;i++){
+		PE[i].DrainOutProducts();
+	}
+}
+
+
 static void CollectAndCompressResults(size_type chunk){
+	DrainOutProducts();
+
 	for(int i=0;i<NUM_OF_PEs;i++){
 		for(int j=0;j<OUTPUT_CHANNEL_CHUNK_SIZE;j++){
 			size_type chunk_idx = 0;

@@ -11,6 +11,20 @@ using namespace std;
 extern struct ProcessElement PE[NUM_OF_PEs];
 
 
+void ProcessElement::DrainOutProducts(){
+#if 0
+	while(!is_input_queue_empty){
+		is_input_queue_empty = acc.queueing(flits,input_halos);
+	}
+#else
+	for (int i=0;i<100;i++){
+		cout<<"PE["<<row<<","<<col<<"] draining..."<<endl;
+		acc.queueing(flits,input_halos);
+	}
+#endif
+}
+
+
 inline offset_type ProcessElement::GetOffsetInMatrix(){
 	return (total_weights+num_of_processed_weights-1) % num_of_weights_per_kernel;
 }
@@ -148,10 +162,10 @@ void ProcessElement::AccumulateProduct(){
 			}else{
 				flits[j][i].write(Flit(ocoord,row_coord,col_coord,prod));
 			}
-
 		}
 	}
-	acc.queueing(flits,input_halos);
+	//cout<<"PE["<<row<<"]["<<col<<"]"<<endl;
+	is_input_queue_empty = acc.queueing(flits,input_halos);
 
 	total_weights += num_of_processed_weights;
 }
