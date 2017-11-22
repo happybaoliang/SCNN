@@ -2,6 +2,8 @@
 #define FPGA_TOP_HPP__
 
 #include"cpu_top.hpp"
+#include"process_element.hpp"
+#include"flit.hpp"
 
 
 int Accelerator(feature_type compressed_input_feature[INPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK],

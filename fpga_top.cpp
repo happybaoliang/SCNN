@@ -3,7 +3,6 @@
 #include<cassert>
 
 #include"fpga_top.hpp"
-#include"process_element.hpp"
 
 using namespace std;
 
@@ -11,6 +10,12 @@ using namespace std;
 struct ProcessElement PE[NUM_OF_PEs];
 
 static size_type max_num_of_none_zero_features[INPUT_CHANNEL_NUM]={0};
+
+hls::stream<Flit> left_halos_channel[VERTICAL_FEATURE_CHUNK_NUM][HORIZONTAL_FEATURE_CHUNK_NUM-1];
+hls::stream<Flit> right_halos_channel[VERTICAL_FEATURE_CHUNK_NUM][HORIZONTAL_FEATURE_CHUNK_NUM-1];
+
+hls::stream<Flit> down_halos_channel[VERTICAL_FEATURE_CHUNK_NUM-1][HORIZONTAL_FEATURE_CHUNK_NUM];
+hls::stream<Flit> upper_halos_channel[VERTICAL_FEATURE_CHUNK_NUM-1][HORIZONTAL_FEATURE_CHUNK_NUM];
 
 static size_type num_of_weights_per_chunk[INPUT_CHANNEL_NUM][OUTPUT_CHANNEL_CHUNK_NUM];
 static zeros_type zeros[INPUT_CHANNEL_NUM][OUTPUT_CHANNEL_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
@@ -79,7 +84,7 @@ static void CollectAndCompressResults(size_type chunk){
 			channel_type out = chunk*OUTPUT_CHANNEL_CHUNK_SIZE+j;
 			for (int k=0;k<FEATURES_ROW_PER_CHUNK;k++){
 				for (int l=0;l<FEATURES_COL_PER_CHUNK;l++){
-					product_type product = PE[i].accumulator[j].get_and_clear(k,l);
+					product_type product = PE[i].acc.get_and_clear(j,k,l);
 					if (product){
 						compressed_output_feature_index[out][i][chunk_idx] = zero_count;
 						compressed_output_feature[out][i][chunk_idx]=product;
@@ -110,6 +115,42 @@ static void inline FetchNextIFeatureMap(){
 }
 
 
+static void inline ConnectAllProcessElement(){
+	for (pe_coord_type i=0;i<VERTICAL_FEATURE_CHUNK_NUM;i++){
+		for (pe_coord_type j=0;j<HORIZONTAL_FEATURE_CHUNK_NUM;j++){
+			if (j<(HORIZONTAL_FEATURE_CHUNK_NUM-1)){
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[RIGHT_PORT] = &right_halos_channel[i][j];
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j+1].output_halos[LEFT_PORT] = &right_halos_channel[i][j];
+			}else{
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[RIGHT_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[RIGHT_PORT] = NULL;
+			}
+			if (j>0){
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[LEFT_PORT] = &left_halos_channel[i][j-1];
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j-1].output_halos[RIGHT_PORT] = &left_halos_channel[i][j-1];
+			}else{
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[LEFT_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[LEFT_PORT] = NULL;
+			}
+			if (i>0){
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[UPPER_PORT] = &upper_halos_channel[i-1][j];
+				PE[(i-1)*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[DOWN_PORT] = &upper_halos_channel[i-1][j];
+			}else{
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[UPPER_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[UPPER_PORT] = NULL;
+			}
+			if (i<(VERTICAL_FEATURE_CHUNK_NUM-1)){
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[DOWN_PORT] = &down_halos_channel[i][j];
+				PE[(i+1)*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[UPPER_PORT] = &down_halos_channel[i][j];
+			}else{
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[DOWN_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[DOWN_PORT] = NULL;
+			}
+		}
+	}
+}
+
+
 static void inline ResetAllProcessElement(){
 	for (pe_coord_type i=0;i<VERTICAL_FEATURE_CHUNK_NUM;i++){
 		for (pe_coord_type j=0;j<HORIZONTAL_FEATURE_CHUNK_NUM;j++){
@@ -132,6 +173,8 @@ int Accelerator(feature_type compressed_input_feature[INPUT_CHANNEL_NUM][FEATURE
 
 	zeros_type index_buf[F];
 	weight_type weight_buf[F];
+
+	ConnectAllProcessElement();
 
 	ResetAllProcessElement();
 

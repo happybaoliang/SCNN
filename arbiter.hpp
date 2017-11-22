@@ -2,18 +2,35 @@
 #define ARBITER_HPP__
 
 
-#include<ap_int.h>
 #include"cpu_top.hpp"
 
 
-#define NUM_OF_REQUESTS		(F*I)
-#define NUM_OF_RESOURCES	(2*F*I)
+enum Port{
+	LEFT_PORT = 0,
+	RIGHT_PORT,
+	UPPER_PORT,
+	DOWN_PORT,
+	NUM_OF_PORTS
+};
 
 
-typedef ap_int<1> grant_type;
-typedef ap_int<1> carrier_type;
-typedef ap_int<1> request_type;
-typedef ap_int<1> priority_type;
+#define NUM_OF_REQUESTS		(F*I+NUM_OF_PORTS)
+#define NUM_OF_RESOURCES	(FEATURES_ROW_PER_CHUNK*OUTPUT_CHANNEL_CHUNK_SIZE)
+
+
+typedef ap_uint<1> valid_type;
+typedef ap_uint<1> grant_type;
+typedef ap_uint<1> carrier_type;
+typedef ap_uint<1> request_type;
+typedef ap_uint<1> priority_type;
+
+
+struct arbiter{
+	void reset();
+	priority_type priority[NUM_OF_RESOURCES];
+	void arbitrate(request_type req[NUM_OF_REQUESTS],grant_type (&gnt)[NUM_OF_REQUESTS]);
+	void granter(priority_type& pri,carrier_type& c_in,carrier_type& c_out,request_type& req, grant_type& grant);
+};
 
 
 #endif

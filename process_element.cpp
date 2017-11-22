@@ -73,7 +73,9 @@ void ProcessElement::FetchNextIFeatureMap(){
 
 void ProcessElement::AccumulateProduct(){
 	if (stall) return;
+
 	num_of_processed_features = 0;
+
 	for (int i=0;i<I;i++){
 		num_of_processed_weights = 0;
 		num_of_processed_features+=feature_index_buf[i]+1;
@@ -82,13 +84,11 @@ void ProcessElement::AccumulateProduct(){
 			if (weight[j]==0 || feature_buf[i]==0){
 				continue;
 			}
-			col_coord_type col_coord = GetColCoord();
-			row_coord_type row_coord = GetRowCoord();
 			ocoord_type ocoord = GetOCoord();
-			product_type product=weight[j]*feature_buf[i];
 			assert(ocoord>=0 && ocoord<OUTPUT_CHANNEL_NUM);
+
+			col_coord_type col_coord = GetColCoord();
 			pe_coord_type col_id = col;
-			pe_coord_type row_id = row;
 			if (col_coord<0){
 				col_id = col_id -1;
 			}else if (col_coord>=FEATURES_ROW_PER_CHUNK){
@@ -96,6 +96,7 @@ void ProcessElement::AccumulateProduct(){
 			}
 			//cout<<"col:"<<col<<"->"<<col_id<<endl;
 			if (col_id<0||col_id>=VERTICAL_FEATURE_CHUNK_NUM){
+				//cout<<"col_id="<<col_id<<endl;
 				continue;
 			}
 			//cout<<"col_coord:"<<col_coord;
@@ -103,24 +104,54 @@ void ProcessElement::AccumulateProduct(){
 			assert(col_coord>=0 && col_coord <FEATURES_COL_PER_CHUNK);
 			//cout<<"->"<<col_coord<<endl;
 
+			row_coord_type row_coord = GetRowCoord();
+			pe_coord_type row_id = row;
 			if(row_coord<0){
 				row_id = row_id - 1;
 			}else if(row_coord>=FEATURES_COL_PER_CHUNK){
 				row_id = row_id + 1;
 			}
 			if (row_id<0||row_id>=HORIZONTAL_FEATURE_CHUNK_NUM){
+				//cout<<"("<<row_id<<","<<col_id<<")"<<endl;
+				//cout<<"row_id="<<row_id<<endl;
 				continue;
 			}
 			//cout<<"row:"<<row<<"->"<<row_id<<endl;
+
+			assert(!((row_id<0) && (col_id<0)));
+			assert(!((row_id<0) && (col_id>=VERTICAL_FEATURE_CHUNK_NUM)));
+			assert(!((row_id>=HORIZONTAL_FEATURE_CHUNK_NUM) && (col_id<0)));
+			assert(!((row_id>=HORIZONTAL_FEATURE_CHUNK_NUM) && (col_id>=VERTICAL_FEATURE_CHUNK_NUM)));
+			pe_id_type dest_pe = row_id*HORIZONTAL_FEATURE_CHUNK_NUM+col_id;
+			assert(dest_pe>=0 && dest_pe<NUM_OF_PEs);
+			//cout<<"pe:"<<(row*HORIZONTAL_FEATURE_CHUNK_NUM+col)<<"->"<<dest_pe<<endl;
+
 			//cout<<"row_coord:"<<row_coord;
 			row_coord = (row_coord + FEATURES_ROW_PER_CHUNK)%FEATURES_ROW_PER_CHUNK;
 			assert(row_coord>=0 && row_coord <FEATURES_ROW_PER_CHUNK);
 			//cout<<"->"<<row_coord<<endl;
-			pe_id_type dest_pe = row_id*HORIZONTAL_FEATURE_CHUNK_NUM+col_id;
-			assert(dest_pe>=0 && dest_pe<NUM_OF_PEs);
-			//cout<<"pe:"<<(row*HORIZONTAL_FEATURE_CHUNK_NUM+col)<<"->"<<dest_pe<<endl;
-			PE[dest_pe].accumulator[ocoord].adder(row_coord, col_coord, product);
+
+			product_type prod = weight[j]*feature_buf[i];
+
+			if (row_id<row){
+				assert(output_halos[UPPER_PORT]!=NULL);
+				output_halos[UPPER_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
+			}else if (row_id>row){
+				assert(output_halos[DOWN_PORT]!=NULL);
+				output_halos[DOWN_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
+			}else if (col_id<col){
+				assert(output_halos[LEFT_PORT]!=NULL);
+				output_halos[LEFT_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
+			}else if (col_id>col){
+				assert(output_halos[RIGHT_PORT]!=NULL);
+				output_halos[RIGHT_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
+			}else{
+				flits[j][i].write(Flit(ocoord,row_coord,col_coord,prod));
+			}
+
 		}
 	}
+	acc.queueing(flits,input_halos);
+
 	total_weights += num_of_processed_weights;
 }
