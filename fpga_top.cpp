@@ -182,15 +182,15 @@ static void inline ConnectAllProcessElement(){
 				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[NORTH_WEST_PORT] = NULL;
 			}
 			if ((i>0) && (j<(HORIZONTAL_FEATURE_CHUNK_NUM-1))){
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[NORTH_EAST_PORT] = &north_east_halos_channel[i][j-1];
-				PE[(i-1)*HORIZONTAL_FEATURE_CHUNK_NUM+j+1].output_halos[SOUTH_WEST_PORT] = &north_east_halos_channel[i][j-1];
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[NORTH_EAST_PORT] = &north_east_halos_channel[i-1][j];
+				PE[(i-1)*HORIZONTAL_FEATURE_CHUNK_NUM+j+1].output_halos[SOUTH_WEST_PORT] = &north_east_halos_channel[i-1][j];
 			}else{
 				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[NORTH_EAST_PORT] = NULL;
 				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[NORTH_EAST_PORT] = NULL;
 			}
 			if ((i<(VERTICAL_FEATURE_CHUNK_NUM-1)) && (j>0)){
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[SOUTH_WEST_PORT] = &south_west_halos_channel[i-1][j];
-				PE[(i+1)*HORIZONTAL_FEATURE_CHUNK_NUM+j-1].output_halos[NORTH_EAST_PORT] = &south_west_halos_channel[i-1][j];
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[SOUTH_WEST_PORT] = &south_west_halos_channel[i][j-1];
+				PE[(i+1)*HORIZONTAL_FEATURE_CHUNK_NUM+j-1].output_halos[NORTH_EAST_PORT] = &south_west_halos_channel[i][j-1];
 			}else{
 				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[SOUTH_WEST_PORT] = NULL;
 				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[SOUTH_WEST_PORT] = NULL;
