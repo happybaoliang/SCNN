@@ -12,6 +12,8 @@
 
 struct crossbar{
 	void reset();
+	Flit flit[NUM_OF_REQUESTS];
+	valid_type valid[NUM_OF_REQUESTS];
 	struct arbiter arb[NUM_OF_RESOURCES];
 	struct accumulator_bank acc[OUTPUT_CHANNEL_CHUNK_SIZE][FEATURES_ROW_PER_CHUNK];
 	bool queueing(hls::stream<Flit> (&products)[F][I],hls::stream<Flit>* input_halos[NUM_OF_PORTS]);

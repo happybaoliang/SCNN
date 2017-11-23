@@ -12,16 +12,9 @@ extern struct ProcessElement PE[NUM_OF_PEs];
 
 
 void ProcessElement::DrainOutProducts(){
-#if 0
-	while(!is_input_queue_empty){
-		is_input_queue_empty = acc.queueing(flits,input_halos);
+	while(input_queue_not_empty){
+		input_queue_not_empty = acc.queueing(flits,input_halos);
 	}
-#else
-	for (int i=0;i<100;i++){
-		cout<<"PE["<<row<<","<<col<<"] draining..."<<endl;
-		acc.queueing(flits,input_halos);
-	}
-#endif
 }
 
 
@@ -165,7 +158,7 @@ void ProcessElement::AccumulateProduct(){
 		}
 	}
 	//cout<<"PE["<<row<<"]["<<col<<"]"<<endl;
-	is_input_queue_empty = acc.queueing(flits,input_halos);
+	input_queue_not_empty = acc.queueing(flits,input_halos);
 
 	total_weights += num_of_processed_weights;
 }

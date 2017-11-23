@@ -19,7 +19,7 @@ struct ProcessElement{
 	size_type total_features;
 	void AccumulateProduct();
 	zeros_type weightindex[F];
-	bool is_input_queue_empty;
+	bool input_queue_not_empty;
 	void FetchNextIFeatureMap();
 	feature_type feature_buf[I];
 	col_coord_type GetColCoord();

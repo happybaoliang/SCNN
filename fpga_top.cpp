@@ -78,6 +78,7 @@ static inline void SetNextInputChannel(channel_type channel){
 
 static void DrainOutProducts(){
 	for (int i=0;i<NUM_OF_PEs;i++){
+		cout<<"PE["<<i<<"] draining..."<<endl;
 		PE[i].DrainOutProducts();
 	}
 }

@@ -10,7 +10,7 @@ void accumulator_bank::reset(){
 
 void accumulator_bank::adder(col_coord_type col_coord, product_type product){
 	acc[col_coord]+= product;
-	cout<<":"<<product<<endl;
+	//cout<<":"<<product<<endl;
 }
 
 
