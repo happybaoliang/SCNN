@@ -3,6 +3,9 @@
 using namespace std;
 
 
+//#define DEBUG_ARBITER 1
+
+
 void crossbar::reset(){
 	for (int i=0;i<OUTPUT_CHANNEL_CHUNK_SIZE;i++){
 		for (int j=0;j<FEATURES_ROW_PER_CHUNK;j++){
@@ -47,16 +50,19 @@ bool crossbar::queueing(hls::stream<Flit> (&products)[F][I],hls::stream<Flit>* i
 		}
 	}
 
+#ifdef DEBUG_ARBITER
+	cout<<"crossbar::valid"<<endl;
+	for (int i=0;i<NUM_OF_REQUESTS;i++){
+		cout<<valid[i]<<" ";
+	}
+	cout<<endl;
+#endif
+
 	for (int i=0;i<NUM_OF_RESOURCES;i++){
 		for (int j=0;j<NUM_OF_REQUESTS;j++){
-			if (flit[i].ochannel*flit[i].row==i){
-				if(valid[j]){
-					request[i][j] = 1;
-				}else{
-					request[i][j] = 0;
-				}
-			}else{
-				request[i][j] = 0;
+			request[i][j] = 0;
+			if (valid[j]){
+				request[flit[j].ochannel*FEATURES_ROW_PER_CHUNK+flit[j].row][j] = 1;
 			}
 		}
 	}
