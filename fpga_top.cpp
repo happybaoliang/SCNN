@@ -95,6 +95,7 @@ static void CollectAndCompressResults(size_type chunk){
 			for (int k=0;k<FEATURES_ROW_PER_CHUNK;k++){
 				for (int l=0;l<FEATURES_COL_PER_CHUNK;l++){
 					product_type product = PE[i].acc.get_and_clear(j,k,l);
+					//cout<<"["<<j<<"]["<<k<<"]["<<l<<"]:"<<product<<endl;
 					if (product){
 						compressed_output_feature_index[out][i][chunk_idx] = zero_count;
 						compressed_output_feature[out][i][chunk_idx]=product;

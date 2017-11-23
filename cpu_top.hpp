@@ -19,8 +19,6 @@
 #define F								9
 #define I								4
 
-#define NUM_OF_CROSSBAR_PORTS			(I*F)
-
 #define KERNEL_SIZE						3
 #define PADDING							(KERNEL_SIZE/2)
 #define STRIDE							1
@@ -30,18 +28,18 @@
 
 #define MAX_ZERO_COUNT					16
 
-#define MAX_WEIGHT_VALUE				256
+#define MAX_WEIGHT_VALUE				2
+#define MAX_FEATURE_VALUE				2
 
-#define MAX_FEATURE_VALUE				256
-#define INPUT_FEATURE_WIDTH				64
-#define INPUT_FEATURE_HEIGHT			64
+#define INPUT_FEATURE_WIDTH				8
+#define INPUT_FEATURE_HEIGHT			8
 
 #define OUTPUT_FEATURE_WIDTH			CEIL_DIV(INPUT_FEATURE_WIDTH+2*PADDING-KERNEL_SIZE+1,STRIDE)
 #define OUTPUT_FEATURE_HEIGHT			CEIL_DIV(INPUT_FEATURE_HEIGHT+2*PADDING-KERNEL_SIZE+1,STRIDE)
 
 //当PE数为６４时，ZU9EG的寄存器资源最多只能容纳8x8的分块，这时accumulator占的寄存器资源达到５０％，最大可尝试的分块大小为11 x 11
-#define HORIZONTAL_FEATURE_CHUNK_NUM	8
-#define VERTICAL_FEATURE_CHUNK_NUM		8
+#define HORIZONTAL_FEATURE_CHUNK_NUM	2
+#define VERTICAL_FEATURE_CHUNK_NUM		2
 #define FEATURE_CHUNK_NUM				(HORIZONTAL_FEATURE_CHUNK_NUM*VERTICAL_FEATURE_CHUNK_NUM)
 #define FEATURES_ROW_PER_CHUNK			CEIL_DIV(INPUT_FEATURE_HEIGHT,VERTICAL_FEATURE_CHUNK_NUM)
 #define FEATURES_COL_PER_CHUNK			CEIL_DIV(INPUT_FEATURE_WIDTH,HORIZONTAL_FEATURE_CHUNK_NUM)
@@ -66,10 +64,8 @@ typedef int channel_type;
 typedef int col_coord_type;
 typedef int row_coord_type;
 typedef int ocoord_type;
-typedef ap_int<64> product_type;
-typedef ap_int<NBITS(I*F)> port_type;
+typedef int product_type;
 #else
-typedef ap_int<NBITS(I*F)> port_type;
 #endif
 
 

@@ -47,33 +47,44 @@ bool crossbar::queueing(hls::stream<Flit> (&products)[F][I],hls::stream<Flit>* i
 		}
 	}
 
-	for (int i=0;i<NUM_OF_REQUESTS;i++){
-		if (valid[i]){
-			request[flit[i].ochannel*flit[i].row][i] = 1;
+	for (int i=0;i<NUM_OF_RESOURCES;i++){
+		for (int j=0;j<NUM_OF_REQUESTS;j++){
+			if (flit[i].ochannel*flit[i].row==i){
+				if(valid[j]){
+					request[i][j] = 1;
+				}else{
+					request[i][j] = 0;
+				}
+			}else{
+				request[i][j] = 0;
+			}
 		}
 	}
 
-/*
-	cout<<"request"<<endl;
+#ifdef DEBUG_ARBITER
+	cout<<"crossbar::request"<<endl;
 	for (int i=0;i<NUM_OF_RESOURCES;i++){
 		for (int j=0;j<NUM_OF_REQUESTS;j++){
 			cout<<request[i][j]<<" ";
 		}
+		cout<<endl;
 	}
-	cout<<endl;
-*/
+#endif
+
 	for (int i=0;i<NUM_OF_RESOURCES;i++){
 		arb[i].arbitrate(request[i],grant[i]);
 	}
-/*
+
+#ifdef DEBUG_ARBITER
 	cout<<"crossbar::grant"<<endl;
 	for (int i=0;i<NUM_OF_RESOURCES;i++){
 		for (int j=0;j<NUM_OF_REQUESTS;j++){
 			cout<<grant[i][j]<<" ";
 		}
+		cout<<endl;
 	}
 	cout<<endl;
-*/
+#endif
 
 	for (int i=0;i<NUM_OF_REQUESTS;i++){
 		grant_type gnt = 0;
@@ -81,10 +92,11 @@ bool crossbar::queueing(hls::stream<Flit> (&products)[F][I],hls::stream<Flit>* i
 			gnt |= grant[j][i];
 		}
 		if (gnt){
+			valid[i] = 0;
 			//cout<<"ochannel="<<flit[i].ochannel;
 			//cout<<" row="<<flit[i].row<<" col="<<flit[i].col;
-			valid[i] = 0;
 			acc[flit[i].ochannel][flit[i].row].adder(flit[i].col,flit[i].product);
+			//cout<<endl;
 		}
 	}
 

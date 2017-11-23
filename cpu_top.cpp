@@ -78,15 +78,21 @@ static void LoadGeneratedWeight(const char* filename){
 		return;
 	}
 
+	cout<<"weight:"<<endl;
 	for (int i=0;i<INPUT_CHANNEL_NUM;i++){
 		for (int j=0;j<OUTPUT_CHANNEL_NUM;j++){
 			for (int k=0;k<KERNEL_SIZE;k++){
 				for (int l=0;l<KERNEL_SIZE;l++){
 					input>>weights[i][j][k][l];
+					cout<<weights[i][j][k][l]<<" ";
 				}
+				cout<<endl;
 			}
+			cout<<endl;
 		}
+		cout<<endl;
 	}
+	cout<<endl;
 
 	input.close();
 }
@@ -130,13 +136,18 @@ static void LoadGeneratedFeatureMap(const char* filename){
 		return;
 	}
 
+	cout<<"input feature:"<<endl;
 	for (int i=0;i<INPUT_CHANNEL_NUM;i++){
 		for (int j=0;j<INPUT_FEATURE_HEIGHT;j++){
 			for (int k=0;k<INPUT_FEATURE_WIDTH;k++){
 				input>>input_feature[i][j][k];
+				cout<<input_feature[i][j][k]<<" ";
 			}
+			cout<<endl;
 		}
+		cout<<endl;
 	}
+	cout<<endl;
 
 	input.close();
 }
@@ -177,7 +188,7 @@ static void CompressInputFeatureMap(){
 					compressed_input_feature_index[i][chunk_id][chunk_idx] = 0;
 					compressed_input_feature[i][chunk_id][chunk_idx] = 0;
 					num_of_none_zero_input_features[i][chunk_id]++;
-					cout<<"insert zero in feature: ["<<i<<"]["<<j<<"]["<<k<<"]"<<endl;
+					cout<<"insert zero in feature: input channel "<<i<<" block["<<j<<"]["<<k<<"]"<<endl;
 					chunk_idx = chunk_idx + 1;
 				}
 			}
@@ -217,7 +228,7 @@ static void CompressWeights(){
 				compressed_weight_index[i][j][chunk_idx] = 0;
 				compressed_weight[i][j][chunk_idx] = 0;
 				num_of_none_zero_weights[i][j] ++;
-				cout<<"insert zero in weights:"<<i<<endl;
+				cout<<"insert zero in weights: input channel "<<i<<" output channel "<<j<<endl;
 				chunk_idx = chunk_idx + 1;
 			}
 		}
@@ -296,7 +307,7 @@ int main(){
 	assert((INPUT_FEATURE_HEIGHT%VERTICAL_FEATURE_CHUNK_NUM)==0);
 	assert((INPUT_FEATURE_WIDTH%HORIZONTAL_FEATURE_CHUNK_NUM)==0);
 
-#if 1
+#if 0
 	GenerateRandomWeight();
 	GenerateRandomFeatureMap();
 	DumpGeneratedWeight("../../../weights.bin");
