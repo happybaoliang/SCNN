@@ -11,11 +11,17 @@ struct ProcessElement PE[NUM_OF_PEs];
 
 static size_type max_num_of_none_zero_features[INPUT_CHANNEL_NUM]={0};
 
-hls::stream<Flit> left_halos_channel[VERTICAL_FEATURE_CHUNK_NUM][HORIZONTAL_FEATURE_CHUNK_NUM-1];
-hls::stream<Flit> right_halos_channel[VERTICAL_FEATURE_CHUNK_NUM][HORIZONTAL_FEATURE_CHUNK_NUM-1];
+hls::stream<Flit> west_halos_channel[VERTICAL_FEATURE_CHUNK_NUM][HORIZONTAL_FEATURE_CHUNK_NUM-1];
+hls::stream<Flit> east_halos_channel[VERTICAL_FEATURE_CHUNK_NUM][HORIZONTAL_FEATURE_CHUNK_NUM-1];
 
-hls::stream<Flit> down_halos_channel[VERTICAL_FEATURE_CHUNK_NUM-1][HORIZONTAL_FEATURE_CHUNK_NUM];
-hls::stream<Flit> upper_halos_channel[VERTICAL_FEATURE_CHUNK_NUM-1][HORIZONTAL_FEATURE_CHUNK_NUM];
+hls::stream<Flit> south_halos_channel[VERTICAL_FEATURE_CHUNK_NUM-1][HORIZONTAL_FEATURE_CHUNK_NUM];
+hls::stream<Flit> north_halos_channel[VERTICAL_FEATURE_CHUNK_NUM-1][HORIZONTAL_FEATURE_CHUNK_NUM];
+
+hls::stream<Flit> south_west_halos_channel[VERTICAL_FEATURE_CHUNK_NUM-1][HORIZONTAL_FEATURE_CHUNK_NUM-1];
+hls::stream<Flit> south_east_halos_channel[VERTICAL_FEATURE_CHUNK_NUM-1][HORIZONTAL_FEATURE_CHUNK_NUM-1];
+
+hls::stream<Flit> north_west_halos_channel[VERTICAL_FEATURE_CHUNK_NUM-1][HORIZONTAL_FEATURE_CHUNK_NUM-1];
+hls::stream<Flit> north_east_halos_channel[VERTICAL_FEATURE_CHUNK_NUM-1][HORIZONTAL_FEATURE_CHUNK_NUM-1];
 
 static size_type num_of_weights_per_chunk[INPUT_CHANNEL_NUM][OUTPUT_CHANNEL_CHUNK_NUM];
 static zeros_type zeros[INPUT_CHANNEL_NUM][OUTPUT_CHANNEL_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
@@ -78,7 +84,7 @@ static inline void SetNextInputChannel(channel_type channel){
 
 static void DrainOutProducts(){
 	for (int i=0;i<NUM_OF_PEs;i++){
-		cout<<"PE["<<i<<"] draining..."<<endl;
+		//cout<<"PE["<<i<<"] draining..."<<endl;
 		PE[i].DrainOutProducts();
 	}
 }
@@ -130,32 +136,65 @@ static void inline ConnectAllProcessElement(){
 	for (pe_coord_type i=0;i<VERTICAL_FEATURE_CHUNK_NUM;i++){
 		for (pe_coord_type j=0;j<HORIZONTAL_FEATURE_CHUNK_NUM;j++){
 			if (j<(HORIZONTAL_FEATURE_CHUNK_NUM-1)){
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[RIGHT_PORT] = &right_halos_channel[i][j];
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j+1].output_halos[LEFT_PORT] = &right_halos_channel[i][j];
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[EAST_PORT] = &east_halos_channel[i][j];
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j+1].output_halos[WEST_PORT] = &east_halos_channel[i][j];
 			}else{
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[RIGHT_PORT] = NULL;
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[RIGHT_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[EAST_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[EAST_PORT] = NULL;
 			}
 			if (j>0){
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[LEFT_PORT] = &left_halos_channel[i][j-1];
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j-1].output_halos[RIGHT_PORT] = &left_halos_channel[i][j-1];
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[WEST_PORT] = &west_halos_channel[i][j-1];
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j-1].output_halos[EAST_PORT] = &west_halos_channel[i][j-1];
 			}else{
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[LEFT_PORT] = NULL;
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[LEFT_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[WEST_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[WEST_PORT] = NULL;
 			}
 			if (i>0){
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[UPPER_PORT] = &upper_halos_channel[i-1][j];
-				PE[(i-1)*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[DOWN_PORT] = &upper_halos_channel[i-1][j];
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[NORTH_PORT] = &north_halos_channel[i-1][j];
+				PE[(i-1)*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[SOUTH_PORT] = &north_halos_channel[i-1][j];
 			}else{
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[UPPER_PORT] = NULL;
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[UPPER_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[NORTH_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[NORTH_PORT] = NULL;
 			}
 			if (i<(VERTICAL_FEATURE_CHUNK_NUM-1)){
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[DOWN_PORT] = &down_halos_channel[i][j];
-				PE[(i+1)*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[UPPER_PORT] = &down_halos_channel[i][j];
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[SOUTH_PORT] = &south_halos_channel[i][j];
+				PE[(i+1)*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[NORTH_PORT] = &south_halos_channel[i][j];
 			}else{
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[DOWN_PORT] = NULL;
-				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[DOWN_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[SOUTH_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[SOUTH_PORT] = NULL;
+			}
+		}
+	}
+
+	for (pe_coord_type i=0;i<VERTICAL_FEATURE_CHUNK_NUM;i++){
+		for (pe_coord_type j=0;j<HORIZONTAL_FEATURE_CHUNK_NUM;j++){
+			if ((i<(VERTICAL_FEATURE_CHUNK_NUM-1)) && (j<(HORIZONTAL_FEATURE_CHUNK_NUM-1))){
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[SOUTH_EAST_PORT] = &south_east_halos_channel[i][j];
+				PE[(i+1)*HORIZONTAL_FEATURE_CHUNK_NUM+j+1].output_halos[NORTH_WEST_PORT] = &south_east_halos_channel[i][j];
+			}else{
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[SOUTH_EAST_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[SOUTH_EAST_PORT] = NULL;
+			}
+			if ((i>0) && (j>0)){
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[NORTH_WEST_PORT] = &north_west_halos_channel[i-1][j-1];
+				PE[(i-1)*HORIZONTAL_FEATURE_CHUNK_NUM+j-1].output_halos[SOUTH_EAST_PORT] = &north_west_halos_channel[i-1][j-1];
+			}else{
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[NORTH_WEST_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[NORTH_WEST_PORT] = NULL;
+			}
+			if ((i>0) && (j<(HORIZONTAL_FEATURE_CHUNK_NUM-1))){
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[NORTH_EAST_PORT] = &north_east_halos_channel[i][j-1];
+				PE[(i-1)*HORIZONTAL_FEATURE_CHUNK_NUM+j+1].output_halos[SOUTH_WEST_PORT] = &north_east_halos_channel[i][j-1];
+			}else{
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[NORTH_EAST_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[NORTH_EAST_PORT] = NULL;
+			}
+			if ((i<(VERTICAL_FEATURE_CHUNK_NUM-1)) && (j>0)){
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[SOUTH_WEST_PORT] = &south_west_halos_channel[i-1][j];
+				PE[(i+1)*HORIZONTAL_FEATURE_CHUNK_NUM+j-1].output_halos[NORTH_EAST_PORT] = &south_west_halos_channel[i-1][j];
+			}else{
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].input_halos[SOUTH_WEST_PORT] = NULL;
+				PE[i*HORIZONTAL_FEATURE_CHUNK_NUM+j].output_halos[SOUTH_WEST_PORT] = NULL;
 			}
 		}
 	}

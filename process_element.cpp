@@ -8,11 +8,9 @@
 using namespace std;
 
 
-extern struct ProcessElement PE[NUM_OF_PEs];
-
-
 void ProcessElement::DrainOutProducts(){
 	while(input_queue_not_empty){
+		//cout<<"draining PE["<<row<<"]["<<col<<"]"<<endl;
 		input_queue_not_empty = acc.queueing(flits,input_halos);
 	}
 }
@@ -73,7 +71,7 @@ void ProcessElement::FetchNextIFeatureMap(){
 		stall = false;
 	}else{
 		stall = true;
-		//cout<<"PE"<<(HORIZONTAL_FEATURE_CHUNK_NUM*row+col)<<" stalled: total features:"<<num_of_none_zero_feature_fetched<<endl;
+		cout<<"PE"<<(HORIZONTAL_FEATURE_CHUNK_NUM*row+col)<<" stalled: total features:"<<num_of_none_zero_feature_fetched<<endl;
 	}
 }
 
@@ -125,10 +123,6 @@ void ProcessElement::AccumulateProduct(){
 			}
 			//cout<<"row:"<<row<<"->"<<row_id<<endl;
 
-			assert(!((row_id<0) && (col_id<0)));
-			assert(!((row_id<0) && (col_id>=VERTICAL_FEATURE_CHUNK_NUM)));
-			assert(!((row_id>=HORIZONTAL_FEATURE_CHUNK_NUM) && (col_id<0)));
-			assert(!((row_id>=HORIZONTAL_FEATURE_CHUNK_NUM) && (col_id>=VERTICAL_FEATURE_CHUNK_NUM)));
 			pe_id_type dest_pe = row_id*HORIZONTAL_FEATURE_CHUNK_NUM+col_id;
 			assert(dest_pe>=0 && dest_pe<NUM_OF_PEs);
 			//cout<<"pe:"<<(row*HORIZONTAL_FEATURE_CHUNK_NUM+col)<<"->"<<dest_pe<<endl;
@@ -140,24 +134,44 @@ void ProcessElement::AccumulateProduct(){
 
 			product_type prod = weight[j]*feature_buf[i];
 
-			if (row_id<row){
-				assert(output_halos[UPPER_PORT]!=NULL);
-				output_halos[UPPER_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
-			}else if (row_id>row){
-				assert(output_halos[DOWN_PORT]!=NULL);
-				output_halos[DOWN_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
-			}else if (col_id<col){
-				assert(output_halos[LEFT_PORT]!=NULL);
-				output_halos[LEFT_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
-			}else if (col_id>col){
-				assert(output_halos[RIGHT_PORT]!=NULL);
-				output_halos[RIGHT_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
+			if ((row_id<row) && (col_id==col)){
+				assert(output_halos[NORTH_PORT]!=NULL);
+				output_halos[NORTH_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
+				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[UPPER]->"<<row_coord<<","<<col_coord<<endl;
+			}else if ((row_id<row) && (col_id<col)){
+				assert(output_halos[NORTH_WEST_PORT]!=NULL);
+				output_halos[NORTH_WEST_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
+				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[NORTH_WEST]->"<<row_coord<<","<<col_coord<<endl;
+			}else if ((row_id<row) && (col_id>col)){
+				assert(output_halos[NORTH_EAST_PORT]!=NULL);
+				output_halos[NORTH_EAST_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
+				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[NORTH_EAST]->"<<row_coord<<","<<col_coord<<endl;
+			}else if ((row_id==row) && (col_id<col)){
+				assert(output_halos[WEST_PORT]!=NULL);
+				output_halos[WEST_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
+				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[LEFT]->"<<row_coord<<","<<col_coord<<endl;
+			}else if ((row_id==row) && (col_id>col)){
+				assert(output_halos[EAST_PORT]!=NULL);
+				output_halos[EAST_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
+				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[RIGHT]->"<<row_coord<<","<<col_coord<<endl;
+			}else if ((row_id>row) && (col_id==col)){
+				assert(output_halos[SOUTH_PORT]!=NULL);
+				output_halos[SOUTH_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
+				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[DOWN]->"<<row_coord<<","<<col_coord<<endl;
+			}else if ((row_id>row) && (col_id>col)){
+				assert(output_halos[SOUTH_EAST_PORT]!=NULL);
+				output_halos[SOUTH_EAST_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
+				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[SOUTH_EAST]->"<<row_coord<<","<<col_coord<<endl;
+			}else if ((row_id>row) && (col_id<col)){
+				assert(output_halos[SOUTH_WEST_PORT]!=NULL);
+				output_halos[SOUTH_WEST_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
+				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[SOUTH_WEST]->"<<row_coord<<","<<col_coord<<endl;
 			}else{
 				flits[j][i].write(Flit(ocoord,row_coord,col_coord,prod));
+				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[LOCAL]->"<<row_coord<<","<<col_coord<<endl;
 			}
 		}
 	}
-	//cout<<"PE["<<row<<"]["<<col<<"]"<<endl;
 	input_queue_not_empty = acc.queueing(flits,input_halos);
 
 	total_weights += num_of_processed_weights;

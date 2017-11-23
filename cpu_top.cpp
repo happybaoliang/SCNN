@@ -307,7 +307,7 @@ int main(){
 	assert((INPUT_FEATURE_HEIGHT%VERTICAL_FEATURE_CHUNK_NUM)==0);
 	assert((INPUT_FEATURE_WIDTH%HORIZONTAL_FEATURE_CHUNK_NUM)==0);
 
-#if 0
+#if 1
 	GenerateRandomWeight();
 	GenerateRandomFeatureMap();
 	DumpGeneratedWeight("../../../weights.bin");

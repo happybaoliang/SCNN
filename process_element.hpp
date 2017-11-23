@@ -44,6 +44,7 @@ struct ProcessElement{
 		current_input_channel=0;
 		num_of_processed_weights=0;
 		num_of_processed_features = 0;
+		input_queue_not_empty = false;
 		num_of_weights_per_kernel = KERNEL_SIZE*KERNEL_SIZE;
 	}
 	void ResetProcessElement(pe_coord_type row_id, pe_coord_type col_id){
@@ -55,6 +56,7 @@ struct ProcessElement{
 		total_features = 0;
 		current_input_channel=0;
 		num_of_processed_weights=0;
+		input_queue_not_empty = false;
 		num_of_processed_features = 0;
 		num_of_none_zero_feature_fetched = 0;
 		num_of_weights_per_kernel = KERNEL_SIZE*KERNEL_SIZE;
