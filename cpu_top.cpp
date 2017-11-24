@@ -27,7 +27,7 @@ size_type num_of_none_zero_output_features[OUTPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM
 zeros_type compressed_output_feature_index[OUTPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 feature_type compressed_output_feature[OUTPUT_CHANNEL_NUM][FEATURE_CHUNK_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 
-static feature_type decompressed_output_feature[INPUT_CHANNEL_NUM][INPUT_FEATURE_WIDTH][INPUT_FEATURE_HEIGHT];
+static feature_type decompressed_output_feature[OUTPUT_CHANNEL_NUM][INPUT_FEATURE_WIDTH][INPUT_FEATURE_HEIGHT];
 
 
 static inline int GetRandomNumber(int max_val){
@@ -238,8 +238,8 @@ static void CompressWeights(){
 
 static void DeCompressOutputFeatureMap(){
 	for (int i=0;i<OUTPUT_CHANNEL_NUM;i++){
-		for (int j=0;j<OUTPUT_FEATURE_WIDTH;j++){
-			for (int k=0;k<OUTPUT_FEATURE_HEIGHT;k++){
+		for (int j=0;j<OUTPUT_FEATURE_HEIGHT;j++){
+			for (int k=0;k<OUTPUT_FEATURE_WIDTH;k++){
 				decompressed_output_feature[i][j][k] = 0;
 			}
 		}
