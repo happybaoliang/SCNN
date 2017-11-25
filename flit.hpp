@@ -5,20 +5,20 @@
 
 
 struct Flit{
-	row_coord_type row;
-	col_coord_type col;
-	ocoord_type ochannel;
-	product_type product;
+	dimension_t row;
+	dimension_t col;
+	output_channel_t ochannel;
+	product_t product;
 	Flit(){
 		row = 0;
 		col = 0;
 		product = 0;
 		ochannel = 0;
 	}
-	Flit(ocoord_type co,
-		row_coord_type r,
-		col_coord_type c,
-		product_type prod){
+	Flit(output_channel_t co,
+		dimension_t r,
+		dimension_t c,
+		product_t prod){
 		row = r;
 		col = c;
 		ochannel = co;

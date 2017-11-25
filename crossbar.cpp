@@ -7,8 +7,8 @@ using namespace std;
 
 
 void crossbar::reset(){
-	for (int i=0;i<OUTPUT_CHANNEL_CHUNK_SIZE;i++){
-		for (int j=0;j<FEATURES_ROW_PER_CHUNK;j++){
+	for (int i=0;i<MAX_OUTPUT_CHANNEL_GROUP_SIZE;i++){
+		for (int j=0;j<MAX_FEATURES_ROW_PER_CHUNK;j++){
 			acc[i][j].reset();
 		}
 	}
@@ -62,7 +62,7 @@ bool crossbar::queueing(hls::stream<Flit> (&products)[F][I],hls::stream<Flit>* i
 		for (int j=0;j<NUM_OF_REQUESTS;j++){
 			request[i][j] = 0;
 			if (valid[j]){
-				request[flit[j].ochannel*FEATURES_ROW_PER_CHUNK+flit[j].row][j] = 1;
+				request[flit[j].ochannel*MAX_FEATURES_ROW_PER_CHUNK+flit[j].row][j] = 1;
 			}
 		}
 	}
