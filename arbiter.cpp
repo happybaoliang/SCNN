@@ -2,9 +2,12 @@
 
 
 void arbiter::reset(){
-	priority[0]=1;
-	for (int i=1;i<NUM_OF_REQUESTS;i++){
-		priority[i]=0;
+	for (int i=0;i<NUM_OF_REQUESTS;i++){
+		if (i==0){
+			priority[0]=1;
+		}else{
+			priority[i]=0;
+		}
 	}
 }
 

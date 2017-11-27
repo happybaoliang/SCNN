@@ -1,3 +1,6 @@
+#include<iostream>
+#include<cstring>
+#include<cassert>
 #include"process_element.hpp"
 
 using namespace std;
@@ -35,21 +38,17 @@ inline output_channel_t ProcessElement::GetOCoord(){
 
 
 inline dimension_t ProcessElement::GetColCoord(){
-	output_channel_t wcol = GetOffsetInMatrix()%kernel_size-kernel_size/2;
+	dimension_t wcol = GetOffsetInMatrix()%kernel_size-kernel_size/2;
 	dimension_t xcoord = (total_features+num_of_processed_features-1)%MAX_FEATURES_COL_PER_CHUNK - wcol;
-	//if (!(xcoord>=-KERNEL_SIZE/2 && xcoord<FEATURES_COL_PER_CHUNK+KERNEL_SIZE/2))
-	//	cout<<"PE"<<(HORIZONTAL_FEATURE_CHUNK_NUM*row+col)<<": wcol="<<wcol<<" xcoord=("<<total_features<<"+"<<num_of_processed_features<<"-1)/"<<FEATURES_ROW_PER_CHUNK<<"-("<<wcol<<")="<<xcoord<<endl;
-	assert(xcoord>=-kernel_size/2 && xcoord<MAX_FEATURES_ROW_PER_CHUNK+kernel_size/2);
+	assert((xcoord>=-kernel_size/2) && (xcoord<MAX_FEATURES_ROW_PER_CHUNK+kernel_size/2));
 	return xcoord;
 }
 
 
 inline dimension_t ProcessElement::GetRowCoord(){
-	output_channel_t wrow = GetOffsetInMatrix()/kernel_size-kernel_size/2;
+	dimension_t wrow = GetOffsetInMatrix()/kernel_size-kernel_size/2;
 	dimension_t ycoord = (total_features+num_of_processed_features-1)/MAX_FEATURES_COL_PER_CHUNK-wrow;
-	//if (!(ycoord>=-KERNEL_SIZE/2 && ycoord<FEATURES_COL_PER_CHUNK+KERNEL_SIZE/2))
-	//	cout<<"PE"<<(HORIZONTAL_FEATURE_CHUNK_NUM*row+col)<<": wrow="<<wrow<<" ycoord=("<<total_features<<"+"<<num_of_processed_features<<"-1)/"<<FEATURES_COL_PER_CHUNK<<"-("<<wrow<<")="<<ycoord<<endl;
-	assert(ycoord>=-kernel_size/2 && ycoord<MAX_FEATURES_COL_PER_CHUNK+kernel_size/2);
+	assert((ycoord>=-kernel_size/2) && (ycoord<MAX_FEATURES_COL_PER_CHUNK+kernel_size/2));
 	return ycoord;
 }
 
@@ -131,35 +130,35 @@ void ProcessElement::AccumulateProduct(){
 			product_t prod = weight[j]*feature_buf[i];
 
 			if ((row_id<row) && (col_id==col)){
-				assert(output_halos[NORTH_PORT]!=NULL);
+				//assert(output_halos[NORTH_PORT]!=NULL);
 				output_halos[NORTH_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
 				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[UPPER]->"<<row_coord<<","<<col_coord<<endl;
 			}else if ((row_id<row) && (col_id<col)){
-				assert(output_halos[NORTH_WEST_PORT]!=NULL);
+				//assert(output_halos[NORTH_WEST_PORT]!=NULL);
 				output_halos[NORTH_WEST_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
 				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[NORTH_WEST]->"<<row_coord<<","<<col_coord<<endl;
 			}else if ((row_id<row) && (col_id>col)){
-				assert(output_halos[NORTH_EAST_PORT]!=NULL);
+				//assert(output_halos[NORTH_EAST_PORT]!=NULL);
 				output_halos[NORTH_EAST_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
 				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[NORTH_EAST]->"<<row_coord<<","<<col_coord<<endl;
 			}else if ((row_id==row) && (col_id<col)){
-				assert(output_halos[WEST_PORT]!=NULL);
+				//assert(output_halos[WEST_PORT]!=NULL);
 				output_halos[WEST_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
 				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[LEFT]->"<<row_coord<<","<<col_coord<<endl;
 			}else if ((row_id==row) && (col_id>col)){
-				assert(output_halos[EAST_PORT]!=NULL);
+				//assert(output_halos[EAST_PORT]!=NULL);
 				output_halos[EAST_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
 				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[RIGHT]->"<<row_coord<<","<<col_coord<<endl;
 			}else if ((row_id>row) && (col_id==col)){
-				assert(output_halos[SOUTH_PORT]!=NULL);
+				//assert(output_halos[SOUTH_PORT]!=NULL);
 				output_halos[SOUTH_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
 				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[DOWN]->"<<row_coord<<","<<col_coord<<endl;
 			}else if ((row_id>row) && (col_id>col)){
-				assert(output_halos[SOUTH_EAST_PORT]!=NULL);
+				//assert(output_halos[SOUTH_EAST_PORT]!=NULL);
 				output_halos[SOUTH_EAST_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
 				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[SOUTH_EAST]->"<<row_coord<<","<<col_coord<<endl;
 			}else if ((row_id>row) && (col_id<col)){
-				assert(output_halos[SOUTH_WEST_PORT]!=NULL);
+				//assert(output_halos[SOUTH_WEST_PORT]!=NULL);
 				output_halos[SOUTH_WEST_PORT]->write(Flit(ocoord,row_coord,col_coord,prod));
 				//cout<<"PE["<<row<<"]["<<col<<"]:"<<GetRowCoord()<<","<<GetColCoord()<<"-[SOUTH_WEST]->"<<row_coord<<","<<col_coord<<endl;
 			}else{

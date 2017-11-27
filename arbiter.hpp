@@ -2,31 +2,7 @@
 #define ARBITER_HPP__
 
 
-#include"cpu_top.hpp"
-
-
-enum Port{
-	WEST_PORT = 0,
-	NORTH_WEST_PORT,
-	EAST_PORT,
-	NORTH_EAST_PORT,
-	NORTH_PORT,
-	SOUTH_EAST_PORT,
-	SOUTH_PORT,
-	SOUTH_WEST_PORT,
-	NUM_OF_PORTS
-};
-
-
-#define NUM_OF_REQUESTS		(F*I+NUM_OF_PORTS)
-#define NUM_OF_RESOURCES	(MAX_FEATURES_ROW_PER_CHUNK*MAX_OUTPUT_CHANNEL_GROUP_SIZE)
-
-
-typedef ap_uint<1> valid_type;
-typedef ap_uint<1> grant_type;
-typedef ap_uint<1> carrier_type;
-typedef ap_uint<1> request_type;
-typedef ap_uint<1> priority_type;
+#include"common.hpp"
 
 
 struct arbiter{

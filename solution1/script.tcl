@@ -4,6 +4,7 @@
 ## Copyright (C) 1986-2016 Xilinx, Inc. All Rights Reserved.
 ############################################################
 open_project SCNN
+set_top Accelerator
 add_files SCNN/accumulator.cpp
 add_files SCNN/accumulator.hpp
 add_files SCNN/accumulator_bank.cpp
@@ -20,7 +21,7 @@ add_files SCNN/process_element.hpp
 add_files -tb SCNN/common.hpp
 add_files -tb SCNN/cpu_top.cpp
 add_files -tb SCNN/cpu_top.hpp
-add_files -tb SCNN/feature.bin
+add_files -tb SCNN/features.bin
 add_files -tb SCNN/layer.cpp
 add_files -tb SCNN/layer.hpp
 add_files -tb SCNN/network.cpp
@@ -32,7 +33,7 @@ open_solution "solution1"
 set_part {xqku115-rlf1924-2-i} -tool vivado
 create_clock -period 10 -name default
 #source "./SCNN/solution1/directives.tcl"
-csim_design -clean -compiler gcc
+csim_design -argv {-mcmodel=large} -clean -compiler gcc
 csynth_design
 cosim_design
 export_design -format ip_catalog

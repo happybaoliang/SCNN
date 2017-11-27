@@ -1,4 +1,117 @@
+#include<iostream>
+#include<fstream>
+#include<cassert>
+#include<cmath>
 #include"layer.hpp"
+
+using namespace std;
+
+
+layer_t::layer_t(){
+	config.config.stride = 0;
+	config.config.pad = true;
+	config.relu = true;
+	weights = NULL;
+	config.config.kernel_size = 0;
+	input_width = 0;
+	input_height = 0;
+	output_width = 0;
+	output_height = 0;
+	config.input_channels = 0;
+	output_channels = 0;
+	input_features = NULL;
+	output_features = NULL;
+	config.compressed_weights = NULL;
+	config.num_of_kernels_per_group = 0;
+	config.num_of_output_channel_groups = 0;
+	config.compressed_weight_index = NULL;
+	config.num_of_none_zero_weights = NULL;
+	config.compressed_input_features = NULL;
+	config.compressed_input_feature_index = NULL;
+	config.num_of_none_zero_input_features = NULL;
+	config.max_num_of_none_zero_input_features = NULL;
+	config.compressed_output_features = NULL;
+	config.compressed_output_feature_index = NULL;
+	config.num_of_none_zero_output_features = NULL;
+	config.config.vertical_input_feature_chunk_num = 0;
+	config.config.horizontal_input_feature_chunk_num = 0;
+	vertical_output_feature_chunk_num = 0;
+	horizontal_output_feature_chunk_num = 0;
+}
+
+layer_t::layer_t(const layer_t& layer){
+	config.config.pad = layer.config.config.pad;
+	config.relu = layer.config.relu;
+	config.config.stride = layer.config.config.stride;
+	weights = NULL;
+	config.config.kernel_size = layer.config.config.kernel_size;
+	input_width = layer.input_width;
+	input_height = layer.input_height;
+	config.input_channels = layer.config.input_channels;
+	output_channels = layer.output_channels;
+	input_features = NULL;
+	output_features = NULL;
+	config.compressed_weights = NULL;
+	config.compressed_weight_index = NULL;
+	config.num_of_none_zero_weights = NULL;
+	config.compressed_input_features = NULL;
+	config.compressed_output_features = NULL;
+	config.compressed_input_feature_index = NULL;
+	config.max_num_of_none_zero_input_features = NULL;
+	config.num_of_none_zero_input_features = NULL;
+	config.compressed_output_feature_index = NULL;
+	config.num_of_none_zero_output_features = NULL;
+	output_width = layer.output_width;
+	output_height = layer.output_height;
+	config.num_of_output_channel_groups = layer.config.num_of_output_channel_groups;
+	config.config.vertical_input_feature_chunk_num = layer.config.config.vertical_input_feature_chunk_num;
+	config.config.horizontal_input_feature_chunk_num = layer.config.config.horizontal_input_feature_chunk_num;
+	vertical_output_feature_chunk_num = layer.vertical_output_feature_chunk_num;
+	horizontal_output_feature_chunk_num = layer.horizontal_output_feature_chunk_num;
+	config.num_of_kernels_per_group = layer.config.num_of_kernels_per_group;
+}
+
+layer_t::layer_t(dimension_t w, dimension_t h, input_channel_t ci, output_channel_t co,
+		kernel_t k, bool p, stride_t s, bool r, output_channel_t nk){
+	assert((s>=1) && (s<=MAX_STRIDE));
+	assert((k>=1) && (k<=MAX_KERNEL_SIZE));
+	assert((w>=1) && (w<=MAX_FEATURE_DIMENSION));
+	assert((h>=1) && (h<=MAX_FEATURE_DIMENSION));
+	assert((ci>=1) && (ci<=MAX_INPUT_CHANNEL_NUM));
+	assert((co>=1) && (co<=MAX_OUTPUT_CHANNEL_NUM));
+	assert((nk>=1) && (nk<=MAX_OUTPUT_CHANNEL_NUM));
+	config.config.pad = p;
+	config.relu = r;
+	config.config.stride = s;
+	weights = NULL;
+	config.config.kernel_size = k;
+	input_width = w;
+	input_height = h;
+	config.input_channels = ci;
+	output_channels = co;
+	input_features = NULL;
+	output_features = NULL;
+	config.compressed_weights = NULL;
+	config.compressed_weight_index = NULL;
+	config.num_of_none_zero_weights = NULL;
+	config.compressed_input_features = NULL;
+	config.compressed_output_features = NULL;
+	config.compressed_input_feature_index = NULL;
+	config.max_num_of_none_zero_input_features = NULL;
+	config.num_of_none_zero_input_features = NULL;
+	config.compressed_output_feature_index = NULL;
+	config.num_of_none_zero_output_features = NULL;
+	dimension_t padding = config.config.pad ? (config.config.kernel_size>>1) : (kernel_t)0;
+	output_width = (input_width + 2*padding - config.config.kernel_size + 1)/config.config.stride;
+	output_height = (input_height + 2* padding - config.config.kernel_size + 1)/config.config.stride;
+	assert(((nk*config.config.kernel_size*config.config.kernel_size)%F)==0);
+	config.num_of_output_channel_groups = ceil(1.0*output_channels/nk);
+	config.config.vertical_input_feature_chunk_num = ceil(1.0*input_height/MAX_FEATURES_ROW_PER_CHUNK);
+	config.config.horizontal_input_feature_chunk_num = ceil(1.0*input_width/MAX_FEATURES_COL_PER_CHUNK);
+	vertical_output_feature_chunk_num = ceil(1.0*output_height/MAX_FEATURES_ROW_PER_CHUNK);
+	horizontal_output_feature_chunk_num = ceil(1.0*output_width/MAX_FEATURES_COL_PER_CHUNK);
+	config.num_of_kernels_per_group = nk;
+}
 
 
 inline weight_t layer_t::GetRandomWeight(int max_val){
@@ -29,13 +142,13 @@ void layer_t::PrintLayer(){
 void layer_t::CompressWeights(){
 	for (input_channel_t i=0;i<config.input_channels;i++){
 		for (output_channel_t j=0;j<config.num_of_output_channel_groups;j++){
-			index_t chunk_idx = 0;
+			weight_index_t chunk_idx = 0;
 			zero_t zero_count = 0;
-			for (output_channel_t k=0;k<MAX_OUTPUT_CHANNEL_GROUP_SIZE;k++){
+			for (output_channel_t k=0;k<config.num_of_kernels_per_group;k++){
 				for (kernel_t l=0;l<config.config.kernel_size;l++){
 					for (kernel_t m=0;m<config.config.kernel_size;m++){
-						if (weights[i][j*MAX_OUTPUT_CHANNEL_GROUP_SIZE+k][l][m]!=0){
-							config.compressed_weights[i][j][chunk_idx] = weights[i][j*MAX_OUTPUT_CHANNEL_GROUP_SIZE+k][l][m];
+						if (weights[i][j*config.num_of_kernels_per_group+k][l][m]!=0){
+							config.compressed_weights[i][j][chunk_idx] = weights[i][j*config.num_of_kernels_per_group+k][l][m];
 							config.compressed_weight_index[i][j][chunk_idx] = zero_count;
 							chunk_idx = chunk_idx + 1;
 							zero_count = 0;
@@ -178,8 +291,8 @@ void layer_t::DeCompressOutputFeatureMap(){
 	for (output_channel_t i=0;i<output_channels;i++){
 		for (dimension_t j=0;j<vertical_output_feature_chunk_num;j++){
 			for (dimension_t k=0;k<horizontal_output_feature_chunk_num;k++){
-				index_t total_features_processed_in_chunk = 0;
-				index_t chunk_id = j*horizontal_output_feature_chunk_num+k;
+				feature_index_t total_features_processed_in_chunk = 0;
+				feature_index_t chunk_id = j*horizontal_output_feature_chunk_num+k;
 				for (dimension_t l=0;l<config.num_of_none_zero_output_features[i][chunk_id];l++){
 					total_features_processed_in_chunk += config.compressed_output_feature_index[i][chunk_id][l]+1;
 					dimension_t chunk_row = (total_features_processed_in_chunk-1) / MAX_FEATURES_COL_PER_CHUNK;
@@ -233,9 +346,9 @@ void layer_t::CompressInputFeatureMap(){
 	for (input_channel_t i=0;i<config.input_channels;i++){
 		for (dimension_t j=0;j<config.config.vertical_input_feature_chunk_num;j++){
 			for (dimension_t k=0;k<config.config.horizontal_input_feature_chunk_num;k++){
-				index_t chunk_idx = 0;
+				feature_index_t chunk_idx = 0;
 				zero_t zero_count = 0;
-				index_t chunk_id = j*config.config.horizontal_input_feature_chunk_num+k;
+				feature_index_t chunk_id = j*config.config.horizontal_input_feature_chunk_num+k;
 				for (dimension_t l=0;l<MAX_FEATURES_ROW_PER_CHUNK;l++){
 					for (dimension_t m=0;m<MAX_FEATURES_COL_PER_CHUNK;m++){
 						dimension_t absolute_row = j*MAX_FEATURES_ROW_PER_CHUNK+l;
@@ -290,7 +403,7 @@ void layer_t::GenerateRandomFeatureMap(){
 
 void layer_t::DumpGeneratedWeight(const char* filename){
 	ofstream output(filename);
-	if(output==NULL){
+	if(!output){
 		cout<<"failed to open "<<filename<<endl;
 		return;
 	}
@@ -312,7 +425,7 @@ void layer_t::DumpGeneratedWeight(const char* filename){
 
 void layer_t::LoadGeneratedWeight(const char* filename){
 	ifstream input(filename);
-	if(input==NULL){
+	if(!input){
 		cout<<"failed to open "<<filename<<endl;
 		return;
 	}
@@ -339,7 +452,7 @@ void layer_t::LoadGeneratedWeight(const char* filename){
 
 void layer_t::LoadGeneratedFeatureMap(const char* filename){
 	ifstream input(filename);
-	if (input==NULL){
+	if (!input){
 		cout<<"failed to open "<<filename<<endl;
 		return;
 	}
@@ -363,7 +476,7 @@ void layer_t::LoadGeneratedFeatureMap(const char* filename){
 
 void layer_t::DumpGeneratedFeatureMap(const char* filename){
 	ofstream output(filename);
-	if (output==NULL){
+	if (!output){
 		cout<<"failed to open "<<filename<<endl;
 		return;
 	}
@@ -394,13 +507,13 @@ bool layer_t::AllocateMemoryForCompressedInputFeature(){
 		return false;
 	}
 
-	config.num_of_none_zero_input_features = new index_t*[config.input_channels];
+	config.num_of_none_zero_input_features = new feature_index_t*[config.input_channels];
 	if (config.num_of_none_zero_input_features == NULL){
 		cout<<"failed to allocate memory for num_of_none_zero_input_features"<<endl;
 		return false;
 	}
 
-	config.max_num_of_none_zero_input_features = new index_t[config.input_channels];
+	config.max_num_of_none_zero_input_features = new feature_index_t[config.input_channels];
 	if (config.max_num_of_none_zero_input_features == NULL){
 		cout<<"failed to allocate memory for max_num_of_none_zero_input_features"<<endl;
 		return false;
@@ -414,7 +527,7 @@ bool layer_t::AllocateMemoryForCompressedInputFeature(){
 			cout<<"failed to allocate memory for compressed_input_features["<<i<<"]"<<endl;
 			return false;
 		}
-		for (index_t j=0;j<total_chunk_num;j++){
+		for (dimension_t j=0;j<total_chunk_num;j++){
 			config.compressed_input_features[i][j] = new feature_t[input_width*input_height];
 			if (config.compressed_input_features[i][j] == NULL){
 				cout<<"failed to allocate memory for compressed_input_features["<<i<<"]["<<j<<"]"<<endl;
@@ -429,7 +542,7 @@ bool layer_t::AllocateMemoryForCompressedInputFeature(){
 			cout<<"failed to allocate memory for compressed_input_feature_index["<<i<<"]"<<endl;
 			return false;
 		}
-		for (index_t j=0;j<total_chunk_num;j++){
+		for (dimension_t j=0;j<total_chunk_num;j++){
 			config.compressed_input_feature_index[i][j] = new zero_t[input_width*input_height];
 			if (config.compressed_input_feature_index[i][j] == NULL){
 				cout<<"failed to allocate memory for compressed_input_feature_index["<<i<<"]["<<j<<"]"<<endl;
@@ -439,7 +552,7 @@ bool layer_t::AllocateMemoryForCompressedInputFeature(){
 	}
 
 	for (input_channel_t i=0;i<config.input_channels;i++){
-		config.num_of_none_zero_input_features[i] = new index_t[total_chunk_num];
+		config.num_of_none_zero_input_features[i] = new feature_index_t[total_chunk_num];
 		if (config.num_of_none_zero_input_features[i] == NULL){
 			cout<<"failed to allocate memory for num_of_none_zero_input_features["<<i<<"]"<<endl;
 			return false;
@@ -463,7 +576,7 @@ bool layer_t::AllocateMemoryForCompressedOutputFeature(){
 		return false;
 	}
 
-	config.num_of_none_zero_output_features = new index_t*[output_channels];
+	config.num_of_none_zero_output_features = new feature_index_t*[output_channels];
 	if (config.num_of_none_zero_output_features == NULL){
 		cout<<"failed to allocate memory for num_of_none_zero_output_features"<<endl;
 		return false;
@@ -477,7 +590,7 @@ bool layer_t::AllocateMemoryForCompressedOutputFeature(){
 			cout<<"failed to allocate memory for compressed_output_features["<<i<<"]"<<endl;
 			return false;
 		}
-		for (index_t j=0;j<total_chunk_num;j++){
+		for (dimension_t j=0;j<total_chunk_num;j++){
 			config.compressed_output_features[i][j] = new feature_t[output_width*output_height];
 			if (config.compressed_output_features[i][j] == NULL){
 				cout<<"failed to allocate memory for compressed_output_features["<<i<<"]["<<j<<"]"<<endl;
@@ -492,7 +605,7 @@ bool layer_t::AllocateMemoryForCompressedOutputFeature(){
 			cout<<"failed to allocate memory for compressed_output_feature_index["<<i<<"]"<<endl;
 			return false;
 		}
-		for (index_t j=0;j<total_chunk_num;j++){
+		for (dimension_t j=0;j<total_chunk_num;j++){
 			config.compressed_output_feature_index[i][j] = new zero_t[output_width*output_height];
 			if (config.compressed_output_feature_index[i][j] == NULL){
 				cout<<"failed to allocate memory for compressed_output_feature_index["<<i<<"]["<<j<<"]"<<endl;
@@ -502,7 +615,7 @@ bool layer_t::AllocateMemoryForCompressedOutputFeature(){
 	}
 
 	for (output_channel_t i=0;i<output_channels;i++){
-		config.num_of_none_zero_output_features[i] = new index_t[total_chunk_num];
+		config.num_of_none_zero_output_features[i] = new feature_index_t[total_chunk_num];
 		if (config.num_of_none_zero_output_features[i] == NULL){
 			cout<<"failed to allocate memory for num_of_none_zero_output_features["<<i<<"]"<<endl;
 			return false;
@@ -526,7 +639,7 @@ bool layer_t::AllocateMemoryForCompressedWeight(){
 		return false;
 	}
 
-	config.num_of_none_zero_weights = new index_t*[config.input_channels];
+	config.num_of_none_zero_weights = new weight_index_t*[config.input_channels];
 	if (config.num_of_none_zero_weights == NULL){
 		cout<<"failed to allocate memory for num_of_none_zero_weights"<<endl;
 		return false;
@@ -563,7 +676,7 @@ bool layer_t::AllocateMemoryForCompressedWeight(){
 	}
 
 	for (input_channel_t i=0;i<config.input_channels;i++){
-		config.num_of_none_zero_weights[i] = new index_t[config.num_of_output_channel_groups];
+		config.num_of_none_zero_weights[i] = new weight_index_t[config.num_of_output_channel_groups];
 		if (config.num_of_none_zero_weights[i] == NULL){
 			cout<<"failed to allocate memory for num_of_none_zero_weights["<<i<<"]"<<endl;
 			return false;

@@ -1,7 +1,6 @@
 #ifndef PROCESS_ELEMENT_HPP__
 #define PROCESS_ELEMENT_HPP__
 
-#include"common.hpp"
 #include"accumulator.hpp"
 #include"layer.hpp"
 
@@ -13,23 +12,23 @@ struct ProcessElement{
 	weight_t weight[F];
 	kernel_t kernel_size;
 	zero_t weightindex[F];
-	index_t total_weights;
-	index_t total_features;
+	weight_index_t total_weights;
+	feature_index_t total_features;
 	struct accumulator acc;
 	feature_t feature_buf[I];
 	bool input_queue_not_empty;
 	zero_t feature_index_buf[I];
 	hls::stream<Flit> flits[F][I];
-	index_t num_of_processed_weights;
-	index_t num_of_weights_per_kernel;
-	index_t num_of_processed_features;
+	weight_index_t num_of_processed_weights;
+	weight_index_t num_of_weights_per_kernel;
+	feature_index_t num_of_processed_features;
 	input_channel_t current_input_channel;
-	index_t num_of_none_zero_feature_fetched;
+	feature_index_t num_of_none_zero_feature_fetched;
 	hls::stream<Flit>* input_halos[NUM_OF_PORTS];
 	hls::stream<Flit>* output_halos[NUM_OF_PORTS];
 	dimension_t vertical_input_feature_chunk_num;
 	dimension_t horizontal_input_feature_chunk_num;
-	index_t num_of_none_zero_features[MAX_INPUT_CHANNEL_NUM];
+	feature_index_t num_of_none_zero_features[MAX_INPUT_CHANNEL_NUM];
 	feature_t featuremap[MAX_INPUT_CHANNEL_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 	zero_t featureindex[MAX_INPUT_CHANNEL_NUM][MAX_NUM_OF_FEATURE_PER_CHUNK];
 

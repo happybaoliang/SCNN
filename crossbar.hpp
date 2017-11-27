@@ -1,10 +1,7 @@
 #ifndef CROSSBAR_HPP__
 #define CROSSBAR_HPP__
 
-#include<iostream>
 #include<hls_stream.h>
-
-#include"cpu_top.hpp"
 #include"accumulator_bank.hpp"
 #include"flit.hpp"
 #include"arbiter.hpp"

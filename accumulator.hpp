@@ -1,9 +1,7 @@
 #ifndef ACCUMULATOR_HPP__
 #define ACCUMULATOR_HPP__
 
-
 #include<hls_stream.h>
-
 #include"crossbar.hpp"
 
 

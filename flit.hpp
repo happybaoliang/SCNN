@@ -1,7 +1,7 @@
 #ifndef FLIT_HPP__
 #define FLIT_HPP__
 
-#include"cpu_top.hpp"
+#include"common.hpp"
 
 
 struct Flit{

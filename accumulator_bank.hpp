@@ -1,10 +1,7 @@
 #ifndef ACCUMULATOR_BANK_HPP__
 #define ACCUMULATOR_BANK_HPP__
 
-#include<iostream>
-#include"cpu_top.hpp"
-
-using namespace std;
+#include"common.hpp"
 
 
 struct accumulator_bank{

@@ -1,4 +1,6 @@
+#include<iostream>
 #include"accumulator.hpp"
+using namespace std;
 
 
 void accumulator::reset(){

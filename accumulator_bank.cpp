@@ -1,4 +1,7 @@
+#include<iostream>
 #include"accumulator_bank.hpp"
+
+using namespace std;
 
 
 void accumulator_bank::reset(){
