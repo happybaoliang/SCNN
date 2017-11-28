@@ -47,8 +47,8 @@ enum Port{
 
 
 #define MAX_ZERO_COUNT						(1<<ZERO_WIDTH)
-#define MAX_WEIGHT_VALUE					(1<<DATA_WIDTH)
-#define MAX_FEATURE_VALUE					(1<<DATA_WIDTH)
+#define MAX_WEIGHT_VALUE					(1<<(DATA_WIDTH>>4))
+#define MAX_FEATURE_VALUE					(1<<(DATA_WIDTH>>4))
 
 
 //macro declare

@@ -86,7 +86,7 @@ void DrainOutProducts(){
 	}
 }
 
-
+//在与I对齐的过程中，极有可能产生溢出
 void CollectAndCompressResults(struct fpga_config& config, weight_index_t co_chunk_id){
 	DrainOutProducts();
 #ifdef INPUT_HALOS
@@ -119,6 +119,13 @@ void CollectAndCompressResults(struct fpga_config& config, weight_index_t co_chu
 					}
 				}
 				config.num_of_none_zero_output_features[out][chunk_id] = chunk_idx;
+				while((config.num_of_none_zero_input_features[out][chunk_id]%I)!=0){
+					config.compressed_input_feature_index[out][chunk_id][chunk_idx] = 0;
+					config.compressed_input_features[out][chunk_id][chunk_idx] = 0;
+					config.num_of_none_zero_input_features[out][chunk_id]++;
+					cout<<"insert zero in feature: input channel "<<out<<" block["<<j<<"]["<<k<<"]"<<endl;
+					chunk_idx = chunk_idx + 1;
+				}
 			}
 		}
 	}
@@ -142,7 +149,7 @@ void CollectAndCompressResults(struct fpga_config& config, weight_index_t co_chu
 							dimension_t row = (l+MAX_FEATURES_ROW_PER_CHUNK) % MAX_FEATURES_ROW_PER_CHUNK;
 							dimension_t col = (m+MAX_FEATURES_COL_PER_CHUNK) % MAX_FEATURES_COL_PER_CHUNK;
 							product = PE[pe_row*config.horizontal_output_feature_chunk_num+pe_col].acc.get(i,row,col);
-							if (config.relu) product = (product>0) ? product : 0;
+							if (config.relu) product = (product>0) ? product : (product_t)0;
 							//cout<<"PE["<<pe_row<<"]["<<pe_col<<"].["<<row<<"]["<<col<<"]="<<product<<endl;
 						}
 						if (product){
@@ -164,6 +171,13 @@ void CollectAndCompressResults(struct fpga_config& config, weight_index_t co_chu
 					}
 				}
 				config.num_of_none_zero_output_features[out][chunk_id] = chunk_idx;
+				while((config.num_of_none_zero_input_features[out][chunk_id]%I)!=0){
+					config.compressed_input_feature_index[out][chunk_id][chunk_idx] = 0;
+					config.compressed_input_features[out][chunk_id][chunk_idx] = 0;
+					config.num_of_none_zero_input_features[out][chunk_id]++;
+					cout<<"insert zero in feature: input channel "<<out<<" block["<<j<<"]["<<k<<"]"<<endl;
+					chunk_idx = chunk_idx + 1;
+				}
 			}
 		}
 	}

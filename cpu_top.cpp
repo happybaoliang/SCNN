@@ -4,7 +4,7 @@
 #include<ctime>
 #include"network.hpp"
 #include"cpu_top.hpp"
-#include<fpga_top.hpp>
+#include"fpga_top.hpp"
 
 using namespace std;
 
@@ -30,8 +30,10 @@ int main(){
 
 	assert(MAX_FEATURES_COL_PER_CHUNK<MAX_FEATURE_DIMENSION);
 
+	cout<<"PE is under utilized"<<endl;
+	cout<<"memory is not released"<<endl;
+	cout<<"data overflow is not correctly solved"<<endl;
 	cout<<"variable stride is not supported"<<endl;
-	cout<<"output feature is not aligned by I"<<endl;
 	cout<<"fully connected layer is not implemented"<<endl;
 
 	network_t *net = CreateNetwork();
@@ -40,7 +42,7 @@ int main(){
 		net->layers[i].AllocateMemoryForWeight();
 		net->layers[i].AllocateMemoryForInputFeature();
 		net->layers[i].AllocateMemoryForOutputFeature();
-#if 0
+#if 1
 		net->layers[i].GenerateRandomWeight();
 		net->layers[i].GenerateRandomFeatureMap();
 		net->layers[i].DumpGeneratedWeight("../../../weights.bin");

@@ -359,6 +359,9 @@ int layer_t::CheckDeCompressedConvolutionResults(){
 						}
 					}
 				}
+				if (config.relu){
+					temp = (temp>0) ? temp : (feature_t)0;
+				}
 				if (temp != output_features[i][k][l]){
 					cout<<"["<<i<<"]["<<k<<"]["<<l<<"]: expect "<<temp<<" got ";
 					cout<<output_features[i][k][l]<<endl;
@@ -374,6 +377,7 @@ int layer_t::CheckDeCompressedConvolutionResults(){
 }
 
 
+//在与I对齐的过程中，极有可能产生溢出
 void layer_t::CompressInputFeatureMap(){
 	for (input_channel_t i=0;i<config.input_channels;i++){
 		for (dimension_t j=0;j<config.config.vertical_input_feature_chunk_num;j++){
