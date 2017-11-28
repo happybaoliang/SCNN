@@ -38,7 +38,6 @@ inline void LoadFeatureMapForPEs(struct fpga_config config){
 	for (input_channel_t i=0;i<config.input_channels;i++){
 		for (pe_t j=0;j<NUM_OF_PEs;j++){
 			PE[j].num_of_none_zero_features[i]=config.num_of_none_zero_input_features[i][j];
-			cout<<"num="<<PE[j].num_of_none_zero_features[i]<<endl;
 			memcpy(PE[j].featuremap[i],config.compressed_input_features[i][j],sizeof(feature_t)*PE[j].num_of_none_zero_features[i]);
 			memcpy(PE[j].featureindex[i],config.compressed_input_feature_index[i][j],sizeof(zero_t)*PE[j].num_of_none_zero_features[i]);
 		}
@@ -102,7 +101,7 @@ void CollectAndCompressResults(struct fpga_config& config, weight_index_t co_chu
 				for (dimension_t l=0;l<MAX_FEATURES_ROW_PER_CHUNK;l++){
 					for (dimension_t m=0;m<MAX_FEATURES_COL_PER_CHUNK;m++){
 						product_t product = PE[i].acc.get_and_clear(i,l,m);
-						cout<<"["<<i<<"]["<<l<<"]["<<m<<"]:"<<product<<endl;
+						//cout<<"["<<i<<"]["<<l<<"]["<<m<<"]:"<<product<<endl;
 						if (product){
 							config.compressed_output_feature_index[out][chunk_id][chunk_idx] = zero_count;
 							config.compressed_output_features[out][chunk_id][chunk_idx]=product;
@@ -143,6 +142,7 @@ void CollectAndCompressResults(struct fpga_config& config, weight_index_t co_chu
 							dimension_t row = (l+MAX_FEATURES_ROW_PER_CHUNK) % MAX_FEATURES_ROW_PER_CHUNK;
 							dimension_t col = (m+MAX_FEATURES_COL_PER_CHUNK) % MAX_FEATURES_COL_PER_CHUNK;
 							product = PE[pe_row*config.horizontal_output_feature_chunk_num+pe_col].acc.get(i,row,col);
+							if (config.relu) product = (product>0) ? product : 0;
 							//cout<<"PE["<<pe_row<<"]["<<pe_col<<"].["<<row<<"]["<<col<<"]="<<product<<endl;
 						}
 						if (product){

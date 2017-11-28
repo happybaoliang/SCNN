@@ -156,7 +156,7 @@ void layer_t::CompressWeights(){
 					for (kernel_t m=0;m<config.config.kernel_size;m++){
 						if (weights[i][j*config.num_of_kernels_per_group+k][l][m]!=0){
 							config.compressed_weights[i][j][chunk_idx] = weights[i][j*config.num_of_kernels_per_group+k][l][m];
-							cout<<"zero_count="<<zero_count<<" weight="<<config.compressed_weights[i][j][chunk_idx]<<endl;
+							//cout<<"zero_count="<<zero_count<<" weight="<<config.compressed_weights[i][j][chunk_idx]<<endl;
 							config.compressed_weight_index[i][j][chunk_idx] = zero_count;
 							chunk_idx = chunk_idx + 1;
 							zero_count = 0;
@@ -164,7 +164,7 @@ void layer_t::CompressWeights(){
 							zero_count = zero_count + 1;
 							if (zero_count==MAX_ZERO_COUNT){
 								config.compressed_weight_index[i][j][chunk_idx] = zero_count;
-								cout<<"zero_count="<<zero_count<<" weight="<<0<<endl;
+								//cout<<"zero_count="<<zero_count<<" weight="<<0<<endl;
 								config.compressed_weights[i][j][chunk_idx] = 0;
 								chunk_idx = chunk_idx + 1;
 								zero_count = 0;

@@ -32,6 +32,7 @@ int main(){
 
 	cout<<"variable stride is not supported"<<endl;
 	cout<<"output feature is not aligned by I"<<endl;
+	cout<<"fully connected layer is not implemented"<<endl;
 
 	network_t *net = CreateNetwork();
 
