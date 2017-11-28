@@ -7,8 +7,8 @@ using namespace std;
 network_t* CreateNetwork() {
 	network_t *net = new network_t(27);
 
-    //Layer Attributes:  (W,   H,   CI,  CO, K, P, 	  S, R,	  kernels_per_group)
-	net->AddLayer(layer_t(64,  64,  3,   3,  3, true, 1, true,1));
+    //Layer Attributes:  (W,   H,   CI,  CO, K, Next_Kernel, P, 	  S, R,	    kernels_per_group)
+	net->AddLayer(layer_t(64,  64,   1,   1,  3, 3,			 true, 	  1, true,  1));
 
 	return net;
 }
@@ -27,7 +27,6 @@ inline void network_t::AddLayer(layer_t layer) {
 	layers[num_layers] = layer;
 	num_layers++;
 };
-
 
 
 network_t::network_t(int total_layers){

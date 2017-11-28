@@ -4,6 +4,21 @@
 #include<ap_int.h>
 
 
+enum Port{
+#ifdef INPUT_HALOS
+	WEST_PORT = 0,
+	EAST_PORT,
+	NORTH_PORT,
+	SOUTH_PORT,
+	NORTH_WEST_PORT,
+	NORTH_EAST_PORT,
+	SOUTH_EAST_PORT,
+	SOUTH_WEST_PORT,
+#endif
+	NUM_OF_PORTS
+};
+
+
 //macro declare
 #define CEIL_DIV(x,y)						(((x)+(y)-1)/(y))
 
@@ -27,12 +42,13 @@
 #define F									9
 #define I									4
 
+#define ZERO_WIDTH							4
 #define MAX_ZERO_COUNT						16
 
-#define MAX_WEIGHT_VALUE					256
-#define MAX_FEATURE_VALUE					256
+#define DATA_WIDTH							8
+#define MAX_WEIGHT_VALUE					64
+#define MAX_FEATURE_VALUE					64
 
-#define NUM_OF_PEs							64
 
 //当PE数为６４时，ZU9EG的寄存器资源最多只能容纳8x8的分块，这时accumulator占的寄存器资源达到５０％，最大可尝试的分块大小为11 x 11
 #define MAX_FEATURES_ROW_PER_CHUNK			8
@@ -40,31 +56,20 @@
 #define MAX_FEATURE_ROW_CHUNK_NUM			CEIL_DIV(MAX_FEATURE_DIMENSION,MAX_FEATURES_ROW_PER_CHUNK)
 #define MAX_FEATURE_COL_CHUNK_NUM			CEIL_DIV(MAX_FEATURE_DIMENSION,MAX_FEATURES_COL_PER_CHUNK)
 #define MAX_NUM_OF_FEATURE_PER_CHUNK		(MAX_FEATURES_ROW_PER_CHUNK*MAX_FEATURES_COL_PER_CHUNK)
-#define MAX_FEATURE_CHUNK_NUM				(MAX_VERTICAL_FEATURE_CHUNK_NUM*MAX_FEATURE_COL_CHUNK_NUM)
+#define MAX_FEATURE_CHUNK_NUM				(MAX_FEATURE_ROW_CHUNK_NUM*MAX_FEATURE_COL_CHUNK_NUM)
 
 #define MAX_OUTPUT_CHANNEL_GROUP_SIZE		2
 #define MAX_OUTPUT_CHANNEL_CHUNK_NUM		CEIL_DIV(MAX_OUTPUT_CHANNEL_NUM,MAX_OUTPUT_CHANNEL_GROUP_SIZE)
 #define MAX_NUM_OF_WEIGHTS_PER_CHUNK		(MAX_OUTPUT_CHANNEL_CHUNK_NUM*MAX_KERNEL_SIZE*MAX_KERNEL_SIZE)
 
+#define NUM_OF_PEs							64//(MAX_OUTPUT_CHANNEL_CHUNK_NUM*MAX_FEATURE_CHUNK_NUM)
+
 #define NUM_OF_REQUESTS						(F*I+NUM_OF_PORTS)
 #define NUM_OF_RESOURCES					(MAX_FEATURES_ROW_PER_CHUNK*MAX_OUTPUT_CHANNEL_GROUP_SIZE)
 
-
-enum Port{
-	WEST_PORT = 0,
-	NORTH_WEST_PORT,
-	EAST_PORT,
-	NORTH_EAST_PORT,
-	NORTH_PORT,
-	SOUTH_EAST_PORT,
-	SOUTH_PORT,
-	SOUTH_WEST_PORT,
-	NUM_OF_PORTS
-};
+//#define INPUT_HALOS							1
 
 
-typedef ap_int<8> weight_t;
-typedef ap_int<8> feature_t;
 typedef ap_int<16> product_t;
 
 typedef ap_uint<1> valid_type;
@@ -74,10 +79,13 @@ typedef ap_uint<1> request_type;
 typedef ap_uint<1> priority_type;
 
 typedef ap_uint<NBITS(NUM_OF_PEs)> pe_t;
+typedef ap_int<NBITS(DATA_WIDTH)> weight_t;
+typedef ap_int<NBITS(DATA_WIDTH)> feature_t;
 typedef ap_uint<NBITS(MAX_STRIDE)> stride_t;
 typedef ap_uint<NBITS(MAX_ZERO_COUNT)> zero_t;
 
 typedef ap_int<NBITS(MAX_KERNEL_SIZE)>	kernel_t;
+
 typedef ap_uint<NBITS(MAX_NUM_OF_LAYERS)> numlayers_t;
 typedef ap_int<NBITS(MAX_FEATURE_DIMENSION)> dimension_t;
 typedef ap_int<NBITS(MAX_FEATURE_DIMENSION)> feature_index_t;

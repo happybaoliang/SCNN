@@ -13,7 +13,11 @@ struct crossbar{
 	valid_type valid[NUM_OF_REQUESTS];
 	struct arbiter arb[NUM_OF_RESOURCES];
 	struct accumulator_bank acc[MAX_OUTPUT_CHANNEL_GROUP_SIZE][MAX_FEATURES_ROW_PER_CHUNK];
+#ifdef INPUT_HALOS
 	bool queueing(hls::stream<Flit> (&products)[F][I],hls::stream<Flit>* input_halos[NUM_OF_PORTS]);
+#else
+	bool queueing(hls::stream<Flit> (&products)[F][I]);
+#endif
 };
 
 

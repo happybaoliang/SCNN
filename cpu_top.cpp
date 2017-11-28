@@ -10,11 +10,25 @@ using namespace std;
 
 
 int main(){
+#ifndef INPUT_HALOS
+	assert(NUM_OF_PORTS==0);
+#endif
+
 	srand((unsigned)time(NULL));
+
+	assert(MAX_ZERO_COUNT<=(1<<ZERO_WIDTH));
 
 	assert((MAX_NUM_OF_FEATURE_PER_CHUNK%I)==0);
 
+	assert(NBITS(MAX_WEIGHT_VALUE/2)<=DATA_WIDTH);
+
+	assert(NBITS(MAX_FEATURE_VALUE/2)<=DATA_WIDTH);
+
 	assert((I*F*NUM_OF_PEs)<=MAX_NUM_OF_DSP_AVAILABLE);
+
+	assert(MAX_FEATURES_ROW_PER_CHUNK<MAX_FEATURE_DIMENSION);
+
+	assert(MAX_FEATURES_COL_PER_CHUNK<MAX_FEATURE_DIMENSION);
 
 	cout<<"variable stride is not supported"<<endl;
 
@@ -24,7 +38,7 @@ int main(){
 		net->layers[i].AllocateMemoryForWeight();
 		net->layers[i].AllocateMemoryForInputFeature();
 		net->layers[i].AllocateMemoryForOutputFeature();
-#if 1
+#if 0
 		net->layers[i].GenerateRandomWeight();
 		net->layers[i].GenerateRandomFeatureMap();
 		net->layers[i].DumpGeneratedWeight("../../../weights.bin");

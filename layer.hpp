@@ -15,6 +15,7 @@ struct pe_config{
 
 struct fpga_config{
 	bool relu;
+	kernel_t next_layer_kernel_size;
 	struct pe_config config;
 	input_channel_t input_channels;
 
@@ -33,6 +34,9 @@ struct fpga_config{
 	feature_index_t** num_of_none_zero_input_features;
 	feature_index_t* max_num_of_none_zero_input_features;
 	output_channel_t num_of_output_channel_groups;
+
+	dimension_t vertical_output_feature_chunk_num;
+	dimension_t horizontal_output_feature_chunk_num;
 };
 
 
@@ -52,13 +56,10 @@ struct layer_t {
 	feature_t*** input_features;
 	feature_t*** output_features;
 
-	dimension_t vertical_output_feature_chunk_num;
-	dimension_t horizontal_output_feature_chunk_num;
-
 	layer_t();
 	layer_t(const layer_t& layer);
-	layer_t(dimension_t w, dimension_t h,
-			input_channel_t ci, output_channel_t co, kernel_t k,
+	layer_t(dimension_t w, dimension_t h, input_channel_t ci,
+			output_channel_t co, kernel_t k,kernel_t next_k,
 			bool p, stride_t s, bool r, output_channel_t nk);
 
 	void PrintLayer();

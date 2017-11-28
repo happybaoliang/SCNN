@@ -23,3 +23,16 @@ product_t accumulator_bank::get_and_clear(dimension_t col_coord){
 	acc[col_coord] = 0;
 	return product;
 }
+
+
+#ifndef INPUT_HALOS
+product_t accumulator_bank::get(dimension_t col_coord){
+	product_t product = acc[col_coord];
+	return product;
+}
+
+
+void accumulator_bank::clear(dimension_t col_coord){
+	acc[col_coord] = 0;
+}
+#endif
