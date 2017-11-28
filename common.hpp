@@ -93,4 +93,6 @@ typedef ap_int<NBITS(MAX_FEATURE_DIMENSION)+1> feature_index_t;
 typedef ap_uint<NBITS(MAX_INPUT_CHANNEL_NUM)> input_channel_t;
 typedef ap_uint<NBITS(MAX_OUTPUT_CHANNEL_NUM)> output_channel_t;
 typedef ap_int<NBITS(MAX_NUM_OF_WEIGHTS_PER_CHUNK)+1> weight_index_t;
+
+
 #endif

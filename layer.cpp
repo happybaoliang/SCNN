@@ -639,8 +639,8 @@ bool layer_t::AllocateMemoryForCompressedOutputFeature(){
 
 	dimension_t total_chunk_num = config.vertical_output_feature_chunk_num * config.horizontal_output_feature_chunk_num;
 #ifndef INPUT_HALOS
-	dimension_t horizontal_output_features_per_chunk = ceil(1.0*output_width/config.horizontal_output_feature_chunk_num) + 2*(config.config.kernel_size/2);
-	dimension_t vertical_output_features_per_chunk = ceil(1.0*output_height/config.vertical_output_feature_chunk_num) + 2*(config.config.kernel_size/2);
+	dimension_t horizontal_output_features_per_chunk = ceil(1.0*output_width/config.horizontal_output_feature_chunk_num) + 2*(config.next_layer_kernel_size/2);
+	dimension_t vertical_output_features_per_chunk = ceil(1.0*output_height/config.vertical_output_feature_chunk_num) + 2*(config.next_layer_kernel_size/2);
 #else
 	dimension_t horizontal_output_features_per_chunk = ceil(1.0*output_width/config.horizontal_output_feature_chunk_num);
 	dimension_t vertical_output_features_per_chunk = ceil(1.0*output_height/config.vertical_output_feature_chunk_num);
@@ -690,7 +690,7 @@ bool layer_t::AllocateMemoryForCompressedOutputFeature(){
 
 
 bool layer_t::AllocateMemoryForCompressedWeight(){
-	config.compressed_weights = new feature_t**[config.input_channels];
+	config.compressed_weights = new weight_t**[config.input_channels];
 	if (config.compressed_weights == NULL){
 		cout<<"failed to allocate memory for compressed_weights"<<endl;
 		return false;
@@ -708,14 +708,17 @@ bool layer_t::AllocateMemoryForCompressedWeight(){
 		return false;
 	}
 
+	weight_index_t num_of_weights_per_kernel = config.config.kernel_size*config.config.kernel_size;
+	weight_index_t max_num_of_weights_per_group = config.num_of_kernels_per_group*num_of_weights_per_kernel;
+
 	for (input_channel_t i=0;i<config.input_channels;i++){
-		config.compressed_weights[i] = new feature_t*[config.num_of_output_channel_groups];
+		config.compressed_weights[i] = new weight_t*[config.num_of_output_channel_groups];
 		if (config.compressed_weights[i] == NULL){
 			cout<<"failed to allocate memory for compressed_weights["<<i<<"]"<<endl;
 			return false;
 		}
 		for (output_channel_t j=0;j<config.num_of_output_channel_groups;j++){
-			config.compressed_weights[i][j] = new feature_t[config.num_of_kernels_per_group];
+			config.compressed_weights[i][j] = new weight_t[max_num_of_weights_per_group];
 			if (config.compressed_weights[i][j] == NULL){
 				cout<<"failed to allocate memory for compressed_weights["<<i<<"]["<<j<<"]"<<endl;
 				return false;
@@ -730,7 +733,7 @@ bool layer_t::AllocateMemoryForCompressedWeight(){
 			return false;
 		}
 		for (output_channel_t j=0;j<config.num_of_output_channel_groups;j++){
-			config.compressed_weight_index[i][j] = new zero_t[config.num_of_kernels_per_group];
+			config.compressed_weight_index[i][j] = new zero_t[max_num_of_weights_per_group];
 			if (config.compressed_weight_index[i][j] == NULL){
 				cout<<"failed to allocate memory for compressed_weight_index["<<i<<"]["<<j<<"]"<<endl;
 				return false;
