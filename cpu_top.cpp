@@ -31,6 +31,7 @@ int main(){
 	assert(MAX_FEATURES_COL_PER_CHUNK<MAX_FEATURE_DIMENSION);
 
 	cout<<"variable stride is not supported"<<endl;
+	cout<<"output feature is not aligned by I"<<endl;
 
 	network_t *net = CreateNetwork();
 
@@ -38,7 +39,7 @@ int main(){
 		net->layers[i].AllocateMemoryForWeight();
 		net->layers[i].AllocateMemoryForInputFeature();
 		net->layers[i].AllocateMemoryForOutputFeature();
-#if 1
+#if 0
 		net->layers[i].GenerateRandomWeight();
 		net->layers[i].GenerateRandomFeatureMap();
 		net->layers[i].DumpGeneratedWeight("../../../weights.bin");

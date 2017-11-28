@@ -18,6 +18,7 @@ weight_index_t num_of_weights_per_chunk[MAX_INPUT_CHANNEL_NUM][MAX_OUTPUT_CHANNE
 zero_t zeros[MAX_INPUT_CHANNEL_NUM][MAX_OUTPUT_CHANNEL_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
 weight_t weight[MAX_INPUT_CHANNEL_NUM][MAX_OUTPUT_CHANNEL_CHUNK_NUM][MAX_NUM_OF_WEIGHTS_PER_CHUNK];
 
+
 #ifdef INPUT_HALOS
 hls::stream<Flit> west_halos_channel[MAX_FEATURE_ROW_CHUNK_NUM][MAX_FEATURE_COL_CHUNK_NUM-1];
 hls::stream<Flit> east_halos_channel[MAX_FEATURE_ROW_CHUNK_NUM][MAX_FEATURE_COL_CHUNK_NUM-1];
@@ -32,10 +33,12 @@ hls::stream<Flit> north_west_halos_channel[MAX_FEATURE_ROW_CHUNK_NUM-1][MAX_FEAT
 hls::stream<Flit> north_east_halos_channel[MAX_FEATURE_ROW_CHUNK_NUM-1][MAX_FEATURE_COL_CHUNK_NUM-1];
 #endif
 
+
 inline void LoadFeatureMapForPEs(struct fpga_config config){
 	for (input_channel_t i=0;i<config.input_channels;i++){
 		for (pe_t j=0;j<NUM_OF_PEs;j++){
 			PE[j].num_of_none_zero_features[i]=config.num_of_none_zero_input_features[i][j];
+			cout<<"num="<<PE[j].num_of_none_zero_features[i]<<endl;
 			memcpy(PE[j].featuremap[i],config.compressed_input_features[i][j],sizeof(feature_t)*PE[j].num_of_none_zero_features[i]);
 			memcpy(PE[j].featureindex[i],config.compressed_input_feature_index[i][j],sizeof(zero_t)*PE[j].num_of_none_zero_features[i]);
 		}
@@ -88,36 +91,39 @@ void DrainOutProducts(){
 void CollectAndCompressResults(struct fpga_config& config, weight_index_t co_chunk_id){
 	DrainOutProducts();
 #ifdef INPUT_HALOS
-	for(pe_t i=0;i<NUM_OF_PEs;i++){
-		for(output_channel_t j=0;j<config.num_of_kernels_per_group;j++){
-			feature_index_t chunk_idx = 0;
-			zero_t zero_count = 0;
-			output_channel_t out = co_chunk_id*config.num_of_kernels_per_group+j;
-			for (int k=0;k<MAX_FEATURES_ROW_PER_CHUNK;k++){
-				for (int l=0;l<MAX_FEATURES_COL_PER_CHUNK;l++){
-					product_t product = PE[i].acc.get_and_clear(j,k,l);
-					//cout<<"["<<j<<"]["<<k<<"]["<<l<<"]:"<<product<<endl;
-					if (product){
-						config.compressed_output_feature_index[out][i][chunk_idx] = zero_count;
-						config.compressed_output_features[out][i][chunk_idx]=product;
-						chunk_idx = chunk_idx + 1;
-						zero_count = 0;
-					}else{
-						zero_count = zero_count + 1;
-						if (zero_count==MAX_ZERO_COUNT){
-							config.compressed_output_feature_index[out][i][chunk_idx] = zero_count;
-							config.compressed_output_features[out][i][chunk_idx] = 0;
+	for (output_channel_t i=0;i<config.num_of_kernels_per_group;i++){
+		output_channel_t out = co_chunk_id*config.num_of_kernels_per_group+i;
+		for (dimension_t j=0;j<config.vertical_output_feature_chunk_num;j++){
+			for (dimension_t k=0;k<config.horizontal_output_feature_chunk_num;k++){
+				zero_t zero_count = 0;
+				feature_index_t chunk_idx = 0;
+				output_channel_t out = co_chunk_id*config.num_of_kernels_per_group+i;
+				dimension_t chunk_id = config.horizontal_output_feature_chunk_num*j + k;
+				for (dimension_t l=0;l<MAX_FEATURES_ROW_PER_CHUNK;l++){
+					for (dimension_t m=0;m<MAX_FEATURES_COL_PER_CHUNK;m++){
+						product_t product = PE[i].acc.get_and_clear(i,l,m);
+						cout<<"["<<i<<"]["<<l<<"]["<<m<<"]:"<<product<<endl;
+						if (product){
+							config.compressed_output_feature_index[out][chunk_id][chunk_idx] = zero_count;
+							config.compressed_output_features[out][chunk_id][chunk_idx]=product;
 							chunk_idx = chunk_idx + 1;
 							zero_count = 0;
+						}else{
+							zero_count = zero_count + 1;
+							if (zero_count==MAX_ZERO_COUNT){
+								config.compressed_output_feature_index[out][chunk_id][chunk_idx] = zero_count;
+								config.compressed_output_features[out][chunk_id][chunk_idx] = 0;
+								chunk_idx = chunk_idx + 1;
+								zero_count = 0;
+							}
 						}
 					}
 				}
+				config.num_of_none_zero_output_features[out][chunk_id] = chunk_idx;
 			}
-			config.num_of_none_zero_output_features[out][i] = chunk_idx;
 		}
 	}
 #else
-
 	for (output_channel_t i=0;i<config.num_of_kernels_per_group;i++){
 		output_channel_t out = co_chunk_id*config.num_of_kernels_per_group+i;
 		for (dimension_t j=0;j<config.vertical_output_feature_chunk_num;j++){
@@ -274,9 +280,9 @@ int Accelerator(struct fpga_config& config){
 
 	ResetAllProcessElement(config.config);
 
-	assert(config.config.kernel_size < MAX_KERNEL_SIZE);
-
-	memcpy(max_num_of_none_zero_features,config.max_num_of_none_zero_input_features,config.input_channels*sizeof(feature_index_t));
+	memcpy(max_num_of_none_zero_features,
+			config.max_num_of_none_zero_input_features,
+			config.input_channels*sizeof(feature_index_t));
 
 	LoadCompressedWeights(config);
 

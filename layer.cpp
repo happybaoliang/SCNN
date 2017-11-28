@@ -40,6 +40,7 @@ layer_t::layer_t(){
 	config.horizontal_output_feature_chunk_num = 0;
 }
 
+
 layer_t::layer_t(const layer_t& layer){
 	config.config.pad = layer.config.config.pad;
 	config.relu = layer.config.relu;
@@ -72,6 +73,7 @@ layer_t::layer_t(const layer_t& layer){
 	config.horizontal_output_feature_chunk_num = layer.config.horizontal_output_feature_chunk_num;
 	config.num_of_kernels_per_group = layer.config.num_of_kernels_per_group;
 }
+
 
 layer_t::layer_t(dimension_t w, dimension_t h, input_channel_t ci, output_channel_t co,
 		kernel_t k, kernel_t next_k, bool p, stride_t s, bool r, output_channel_t nk){
@@ -304,14 +306,13 @@ void layer_t::DeCompressOutputFeatureMap(){
 					total_features_processed_in_chunk += config.compressed_output_feature_index[i][chunk_id][l]+1;
 					dimension_t chunk_row = (total_features_processed_in_chunk-1) / MAX_FEATURES_COL_PER_CHUNK;
 					dimension_t chunk_col = (total_features_processed_in_chunk-1) % MAX_FEATURES_COL_PER_CHUNK;
-					output_features[i][MAX_FEATURES_ROW_PER_CHUNK*j+chunk_row]\
-						[MAX_FEATURES_COL_PER_CHUNK*k+chunk_col] = config.compressed_output_features[i][chunk_id][l];
+					output_features[i][MAX_FEATURES_ROW_PER_CHUNK*j+chunk_row][MAX_FEATURES_COL_PER_CHUNK*k+chunk_col] = \
+						config.compressed_output_features[i][chunk_id][l];
 				}
 			}
 		}
 	}
 #else
-
 	dimension_t column = (MAX_FEATURES_COL_PER_CHUNK+2*(config.next_layer_kernel_size/2));
 	for (output_channel_t i=0;i<output_channels;i++){
 		for (dimension_t j=0;j<config.vertical_output_feature_chunk_num;j++){
@@ -346,8 +347,8 @@ int layer_t::CheckDeCompressedConvolutionResults(){
 			for (dimension_t l=0;l<output_width;l++){
 				temp = 0;
 				for (input_channel_t j=0;j<config.input_channels;j++){
-					for (int m=-config.config.kernel_size/2;m<=config.config.kernel_size/2;m++){
-						for (int n=-config.config.kernel_size/2;n<=config.config.kernel_size/2;n++){
+					for (kernel_t m=-config.config.kernel_size/2;m<=config.config.kernel_size/2;m++){
+						for (kernel_t n=-config.config.kernel_size/2;n<=config.config.kernel_size/2;n++){
 							dimension_t row = k+m;
 							dimension_t col = l+n;
 							if (col<0||col>=output_width)
@@ -379,18 +380,25 @@ void layer_t::CompressInputFeatureMap(){
 			for (dimension_t k=0;k<config.config.horizontal_input_feature_chunk_num;k++){
 				zero_t zero_count = 0;
 				feature_index_t chunk_idx = 0;
-				kernel_t ksize = config.config.kernel_size;
 				feature_index_t chunk_id = j*config.config.horizontal_input_feature_chunk_num+k;
+#ifdef INPUT_HALOS
+				for (dimension_t l=0;l<MAX_FEATURES_ROW_PER_CHUNK;l++){
+					for (dimension_t m=0;m<MAX_FEATURES_COL_PER_CHUNK;m++){
+						dimension_t absolute_row = j*MAX_FEATURES_ROW_PER_CHUNK+l;
+						dimension_t absolute_col = k*MAX_FEATURES_COL_PER_CHUNK+m;
+						if (absolute_row>=input_height || absolute_col>input_width) continue;
+						feature_t feature = input_features[i][absolute_row][absolute_col];
+#else
+				kernel_t ksize = config.config.kernel_size;
 				for (dimension_t l=-ksize/2;l<MAX_FEATURES_ROW_PER_CHUNK+ksize/2;l++){
 					for (dimension_t m=-ksize/2;m<MAX_FEATURES_COL_PER_CHUNK+ksize/2;m++){
 						feature_t feature = 0;
 						dimension_t absolute_row = j*MAX_FEATURES_ROW_PER_CHUNK+l;
 						dimension_t absolute_col = k*MAX_FEATURES_COL_PER_CHUNK+m;
-
 						if (absolute_row<0 || absolute_row>=input_height) feature = 0;
 						else if (absolute_col<0 || absolute_col>=input_width) feature = 0;
 						else feature = input_features[i][absolute_row][absolute_col];
-
+#endif
 						if (feature!=0){
 							config.compressed_input_feature_index[i][chunk_id][chunk_idx] = zero_count;
 							config.compressed_input_features[i][chunk_id][chunk_idx] = feature;
@@ -559,6 +567,14 @@ bool layer_t::AllocateMemoryForCompressedInputFeature(){
 	}
 
 	dimension_t total_chunk_num = config.config.vertical_input_feature_chunk_num * config.config.horizontal_input_feature_chunk_num;
+#ifndef INPUT_HALOS
+	dimension_t total_input_features_row_per_chunk = ceil(1.0*input_height/config.config.vertical_input_feature_chunk_num) + 2*(config.config.kernel_size/2);
+	dimension_t total_input_features_col_per_chunk = ceil(1.0*input_width/config.config.horizontal_input_feature_chunk_num) + 2*(config.config.kernel_size/2);
+#else
+	dimension_t total_input_features_row_per_chunk = ceil(1.0*input_height/config.config.vertical_input_feature_chunk_num);
+	dimension_t total_input_features_col_per_chunk = ceil(1.0*input_width/config.config.horizontal_input_feature_chunk_num);
+#endif
+	dimension_t total_input_features_per_chunk = total_input_features_row_per_chunk* total_input_features_col_per_chunk;
 
 	for (input_channel_t i=0;i<config.input_channels;i++){
 		config.compressed_input_features[i] = new feature_t*[total_chunk_num];
@@ -567,7 +583,7 @@ bool layer_t::AllocateMemoryForCompressedInputFeature(){
 			return false;
 		}
 		for (dimension_t j=0;j<total_chunk_num;j++){
-			config.compressed_input_features[i][j] = new feature_t[input_width*input_height];
+			config.compressed_input_features[i][j] = new feature_t[total_input_features_per_chunk];
 			if (config.compressed_input_features[i][j] == NULL){
 				cout<<"failed to allocate memory for compressed_input_features["<<i<<"]["<<j<<"]"<<endl;
 				return false;
@@ -582,7 +598,7 @@ bool layer_t::AllocateMemoryForCompressedInputFeature(){
 			return false;
 		}
 		for (dimension_t j=0;j<total_chunk_num;j++){
-			config.compressed_input_feature_index[i][j] = new zero_t[input_width*input_height];
+			config.compressed_input_feature_index[i][j] = new zero_t[total_input_features_per_chunk];
 			if (config.compressed_input_feature_index[i][j] == NULL){
 				cout<<"failed to allocate memory for compressed_input_feature_index["<<i<<"]["<<j<<"]"<<endl;
 				return false;
@@ -622,6 +638,14 @@ bool layer_t::AllocateMemoryForCompressedOutputFeature(){
 	}
 
 	dimension_t total_chunk_num = config.vertical_output_feature_chunk_num * config.horizontal_output_feature_chunk_num;
+#ifndef INPUT_HALOS
+	dimension_t horizontal_output_features_per_chunk = ceil(1.0*output_width/config.horizontal_output_feature_chunk_num) + 2*(config.config.kernel_size/2);
+	dimension_t vertical_output_features_per_chunk = ceil(1.0*output_height/config.vertical_output_feature_chunk_num) + 2*(config.config.kernel_size/2);
+#else
+	dimension_t horizontal_output_features_per_chunk = ceil(1.0*output_width/config.horizontal_output_feature_chunk_num);
+	dimension_t vertical_output_features_per_chunk = ceil(1.0*output_height/config.vertical_output_feature_chunk_num);
+#endif
+	dimension_t total_features_per_chunk = horizontal_output_features_per_chunk*vertical_output_features_per_chunk;
 
 	for (output_channel_t i=0;i<output_channels;i++){
 		config.compressed_output_features[i] = new feature_t*[total_chunk_num];
@@ -630,7 +654,7 @@ bool layer_t::AllocateMemoryForCompressedOutputFeature(){
 			return false;
 		}
 		for (dimension_t j=0;j<total_chunk_num;j++){
-			config.compressed_output_features[i][j] = new feature_t[output_width*output_height];
+			config.compressed_output_features[i][j] = new feature_t[total_features_per_chunk];
 			if (config.compressed_output_features[i][j] == NULL){
 				cout<<"failed to allocate memory for compressed_output_features["<<i<<"]["<<j<<"]"<<endl;
 				return false;
@@ -645,7 +669,7 @@ bool layer_t::AllocateMemoryForCompressedOutputFeature(){
 			return false;
 		}
 		for (dimension_t j=0;j<total_chunk_num;j++){
-			config.compressed_output_feature_index[i][j] = new zero_t[output_width*output_height];
+			config.compressed_output_feature_index[i][j] = new zero_t[total_features_per_chunk];
 			if (config.compressed_output_feature_index[i][j] == NULL){
 				cout<<"failed to allocate memory for compressed_output_feature_index["<<i<<"]["<<j<<"]"<<endl;
 				return false;

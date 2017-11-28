@@ -9,7 +9,11 @@ using namespace std;
 void ProcessElement::DrainOutProducts(){
 	while(input_queue_not_empty){
 		//cout<<"draining PE["<<row<<"]["<<col<<"]"<<endl;
+#ifdef INPUT_HALOS
+		input_queue_not_empty = acc.queueing(flits,input_halos);
+#else
 		input_queue_not_empty = acc.queueing(flits);
+#endif
 	}
 }
 
@@ -49,8 +53,8 @@ void ProcessElement::FetchNextIFeatureMap(){
 		stall = false;
 	}else{
 		stall = true;
-		cout<<"PE"<<(horizontal_input_feature_chunk_num*row+col);
-		cout<<" stalled: total features:"<<num_of_none_zero_feature_fetched<<endl;
+		//cout<<"PE"<<(horizontal_input_feature_chunk_num*row+col)<<" stalled:";
+		//cout<<" total features:"<<num_of_none_zero_feature_fetched<<endl;
 	}
 }
 
@@ -58,7 +62,7 @@ void ProcessElement::FetchNextIFeatureMap(){
 #ifdef INPUT_HALOS
 inline dimension_t ProcessElement::GetColCoord(){
 	dimension_t wcol = GetOffsetInMatrix()%kernel_size-kernel_size/2;
-	dimension_t xcoord = (total_features+num_of_processed_features-1)%MAX_FEATURES_COL_PER_CHUNK - wcol;
+	dimension_t xcoord = (total_features+num_of_processed_features-1)%MAX_FEATURES_COL_PER_CHUNK-wcol;
 	assert((xcoord>=-kernel_size/2) && (xcoord<MAX_FEATURES_ROW_PER_CHUNK+kernel_size/2));
 	return xcoord;
 }
@@ -118,10 +122,6 @@ void ProcessElement::AccumulateProduct(){
 				continue;
 			}
 			//cout<<"row:"<<row<<"->"<<row_id<<endl;
-
-			pe_t dest_pe = row_id*horizontal_input_feature_chunk_num+col_id;
-			assert(dest_pe>=0 && dest_pe<NUM_OF_PEs);
-			//cout<<"pe:"<<(row*HORIZONTAL_FEATURE_CHUNK_NUM+col)<<"->"<<dest_pe<<endl;
 
 			//cout<<"row_coord:"<<row_coord;
 			row_coord = (row_coord + MAX_FEATURES_ROW_PER_CHUNK)%MAX_FEATURES_ROW_PER_CHUNK;

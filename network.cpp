@@ -8,7 +8,7 @@ network_t* CreateNetwork() {
 	network_t *net = new network_t(27);
 
     //Layer Attributes:  (W,   H,   CI,  CO, K, Next_Kernel, P, 	  S, R,	    kernels_per_group)
-	net->AddLayer(layer_t(64,  64,   1,   1,  3, 3,			 true, 	  1, true,  1));
+	net->AddLayer(layer_t(8,   8,   1,   1,  3, 3,			 true, 	  1, true,  1));
 
 	return net;
 }
