@@ -363,7 +363,7 @@ int layer_t::CheckDeCompressedConvolutionResults(){
 					cout<<output_features[i][k][l]<<endl;
 					error_count ++;
 				}else{
-					cout<<"["<<i<<"]["<<k<<"]["<<l<<"]: "<<temp<<endl;
+					//cout<<"["<<i<<"]["<<k<<"]["<<l<<"]: "<<temp<<endl;
 				}
 			}
 		}

@@ -7,12 +7,12 @@
 struct accumulator_bank{
 	void reset();
 #ifndef INPUT_HALOS
-	void clear(dimension_t col_coord);
-	product_t get(dimension_t col_coord);
+	void clear(output_channel_t ocoord);
+	product_t get(output_channel_t ocoord);
 #endif
-	product_t acc[MAX_FEATURES_COL_PER_CHUNK];
-	product_t get_and_clear(dimension_t col_coord);
-	void adder(dimension_t col_coord, product_t product);
+	product_t acc[MAX_OUTPUT_CHANNEL_GROUP_SIZE];
+	product_t get_and_clear(output_channel_t ocoord);
+	void adder(output_channel_t ocoord, product_t product);
 };
 
 

@@ -155,7 +155,7 @@ bool crossbar::queueing(hls::stream<Flit> (&products)[F][I]){
 		for (int j=0;j<NUM_OF_REQUESTS;j++){
 			request[i][j] = 0;
 			if (valid[j]){
-				request[flit[j].ochannel*MAX_FEATURES_ROW_PER_CHUNK+flit[j].row][j] = 1;
+				request[flit[j].col*MAX_FEATURES_ROW_PER_CHUNK+flit[j].row][j] = 1;
 			}
 		}
 	}
@@ -194,7 +194,7 @@ bool crossbar::queueing(hls::stream<Flit> (&products)[F][I]){
 			valid[i] = 0;
 			//cout<<"ochannel="<<flit[i].ochannel;
 			//cout<<" row="<<flit[i].row<<" col="<<flit[i].col;
-			acc[flit[i].ochannel][flit[i].row].adder(flit[i].col,flit[i].product);
+			acc[flit[i].col][flit[i].row].adder(flit[i].ochannel,flit[i].product);
 			//cout<<endl;
 		}
 	}

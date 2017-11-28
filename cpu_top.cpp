@@ -38,7 +38,7 @@ int main(){
 		net->layers[i].AllocateMemoryForWeight();
 		net->layers[i].AllocateMemoryForInputFeature();
 		net->layers[i].AllocateMemoryForOutputFeature();
-#if 0
+#if 1
 		net->layers[i].GenerateRandomWeight();
 		net->layers[i].GenerateRandomFeatureMap();
 		net->layers[i].DumpGeneratedWeight("../../../weights.bin");
