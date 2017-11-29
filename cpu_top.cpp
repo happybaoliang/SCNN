@@ -31,9 +31,8 @@ int main(){
 	assert(MAX_FEATURES_COL_PER_CHUNK<MAX_FEATURE_DIMENSION);
 
 	cout<<"PE is under utilized"<<endl;
-	cout<<"memory is not released"<<endl;
-	cout<<"data overflow is not correctly solved"<<endl;
 	cout<<"variable stride is not supported"<<endl;
+	cout<<"data overflow is not correctly solved"<<endl;
 	cout<<"fully connected layer is not implemented"<<endl;
 
 	network_t *net = CreateNetwork();
@@ -42,7 +41,7 @@ int main(){
 		net->layers[i].AllocateMemoryForWeight();
 		net->layers[i].AllocateMemoryForInputFeature();
 		net->layers[i].AllocateMemoryForOutputFeature();
-#if 1
+#ifndef DEBUG
 		net->layers[i].GenerateRandomWeight();
 		net->layers[i].GenerateRandomFeatureMap();
 		net->layers[i].DumpGeneratedWeight("../../../weights.bin");
@@ -66,6 +65,12 @@ int main(){
 		if (net->layers[i].CheckDeCompressedConvolutionResults()){
 			return -1;
 		}
+		net->layers[i].ReleaseMemoryforWeight();
+		net->layers[i].ReleaseMemoryForInputFeature();
+		net->layers[i].ReleaseMemoryForOutputFeature();
+		net->layers[i].ReleaseMemoryForCompressedWeight();
+		net->layers[i].ReleaseMemoryForCompressedInputFeature();
+		net->layers[i].ReleaseMemoryForCompressedOutputFeature();
 	}
 
 	return 0;

@@ -4,7 +4,8 @@
 #include<ap_int.h>
 
 
-//#define INPUT_HALOS							1
+//#define DEBUG									1
+#define INPUT_HALOS							1
 
 #define ZERO_WIDTH							4
 #define DATA_WIDTH							8

@@ -199,6 +199,20 @@ void layer_t::GenerateRandomWeight(){
 }
 
 
+void layer_t::ReleaseMemoryforWeight(){
+	for (input_channel_t i=0;i<config.input_channels;i++){
+		for (output_channel_t j=0;j<output_channels;j++){
+			for (kernel_t k=0;k<config.config.kernel_size;k++){
+				delete[] weights[i][j][k];
+			}
+			delete[] weights[i][j];
+		}
+		delete[] weights[i];
+	}
+	delete[] weights;
+}
+
+
 bool layer_t::AllocateMemoryForWeight(){
 	weights = new weight_t***[config.input_channels];
 	if (weights == NULL){
@@ -234,6 +248,17 @@ bool layer_t::AllocateMemoryForWeight(){
 }
 
 
+void layer_t::ReleaseMemoryForInputFeature(){
+	for(input_channel_t i=0;i<config.input_channels;i++){
+		for (dimension_t j=0;j<input_height;j++){
+			delete[] input_features[i][j];
+		}
+		delete[] input_features[i];
+	}
+	delete[] input_features;
+}
+
+
 bool layer_t::AllocateMemoryForInputFeature(){
 	input_features = new feature_t**[config.input_channels];
 	if (input_features == NULL){
@@ -258,6 +283,17 @@ bool layer_t::AllocateMemoryForInputFeature(){
 	}
 
 	return true;
+}
+
+
+void layer_t::ReleaseMemoryForOutputFeature(){
+	for (output_channel_t i=0;i<output_channels;i++){
+		for (dimension_t j=0;j<output_height;j++){
+			delete[] output_features[i][j];
+		}
+		delete[] output_features[i];
+	}
+	delete[] output_features;
 }
 
 
@@ -339,7 +375,7 @@ void layer_t::DeCompressOutputFeatureMap(){
 
 
 int layer_t::CheckDeCompressedConvolutionResults(){
-	feature_t temp = 0;
+	product_t temp = 0;
 	int error_count = 0;
 
 	for (output_channel_t i=0;i<output_channels;i++){
@@ -360,7 +396,7 @@ int layer_t::CheckDeCompressedConvolutionResults(){
 					}
 				}
 				if (config.relu){
-					temp = (temp>0) ? temp : (feature_t)0;
+					temp = (temp>0) ? temp : (product_t)0;
 				}
 				if (temp != output_features[i][k][l]){
 					cout<<"["<<i<<"]["<<k<<"]["<<l<<"]: expect "<<temp<<" got ";
@@ -545,6 +581,24 @@ void layer_t::DumpGeneratedFeatureMap(const char* filename){
 }
 
 
+void layer_t::ReleaseMemoryForCompressedInputFeature(){
+	dimension_t total_chunk_num = config.config.vertical_input_feature_chunk_num * config.config.horizontal_input_feature_chunk_num;
+
+	for (input_channel_t i=0;i<config.input_channels;i++){
+		for (dimension_t j=0;j<total_chunk_num;j++){
+			delete[] config.compressed_input_features[i][j];
+			delete[] config.compressed_input_feature_index[i][j];
+		}
+		delete[] config.compressed_input_features[i];
+		delete[] config.compressed_input_feature_index[i];
+		delete[] config.num_of_none_zero_input_features[i];
+	}
+	delete[] config.compressed_input_features;
+	delete[] config.compressed_input_feature_index;
+	delete[] config.num_of_none_zero_input_features;
+}
+
+
 bool layer_t::AllocateMemoryForCompressedInputFeature(){
 	config.compressed_input_features = new feature_t**[config.input_channels];
 	if (config.compressed_input_features == NULL){
@@ -622,6 +676,23 @@ bool layer_t::AllocateMemoryForCompressedInputFeature(){
 }
 
 
+void layer_t::ReleaseMemoryForCompressedOutputFeature(){
+	dimension_t total_chunk_num = config.vertical_output_feature_chunk_num * config.horizontal_output_feature_chunk_num;
+	for (output_channel_t i=0;i<output_channels;i++){
+		for (dimension_t j=0;j<total_chunk_num;j++){
+			delete[] config.compressed_output_features[i][j];
+			delete[] config.compressed_output_feature_index[i][j];
+		}
+		delete[] config.compressed_output_features[i];
+		delete[] config.compressed_output_feature_index[i];
+		delete[] config.num_of_none_zero_output_features[i];
+	}
+	delete[] config.compressed_output_features;
+	delete[] config.compressed_output_feature_index;
+	delete[] config.num_of_none_zero_output_features;
+}
+
+
 bool layer_t::AllocateMemoryForCompressedOutputFeature(){
 	config.compressed_output_features = new feature_t**[output_channels];
 	if (config.compressed_output_features == NULL){
@@ -690,6 +761,22 @@ bool layer_t::AllocateMemoryForCompressedOutputFeature(){
 	}
 
 	return true;
+}
+
+
+void layer_t::ReleaseMemoryForCompressedWeight(){
+	for (input_channel_t i=0;i<config.input_channels;i++){
+		for (output_channel_t j=0;j<config.num_of_output_channel_groups;j++){
+			delete[] config.compressed_weights[i][j];
+			delete[] config.compressed_weight_index[i][j];
+		}
+		delete[] config.compressed_weights[i];
+		delete[] config.compressed_weight_index[i];
+		delete[] config.num_of_none_zero_weights[i];
+	}
+	delete[] config.compressed_weights;
+	delete[] config.compressed_weight_index;
+	delete[] config.num_of_none_zero_weights;
 }
 
 

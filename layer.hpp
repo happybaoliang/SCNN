@@ -66,8 +66,10 @@ struct layer_t {
 
 	void CompressWeights();
 	void GenerateRandomWeight();
+	void ReleaseMemoryforWeight();
 	bool AllocateMemoryForWeight();
 	weight_t GetRandomWeight(int max_val);
+	void ReleaseMemoryForCompressedWeight();
 	bool AllocateMemoryForCompressedWeight();
 	void DumpGeneratedWeight(const char* filename);
 	void LoadGeneratedWeight(const char* filename);
@@ -75,11 +77,15 @@ struct layer_t {
 	void CompressInputFeatureMap();
 	void GenerateRandomFeatureMap();
 	void DeCompressOutputFeatureMap();
+	void ReleaseMemoryForInputFeature();
 	bool AllocateMemoryForInputFeature();
+	void ReleaseMemoryForOutputFeature();
 	bool AllocateMemoryForOutputFeature();
 	feature_t GetRandomFeature(int max_val);
 	int CheckDeCompressedConvolutionResults();
+	void ReleaseMemoryForCompressedInputFeature();
 	bool AllocateMemoryForCompressedInputFeature();
+	void ReleaseMemoryForCompressedOutputFeature();
 	bool AllocateMemoryForCompressedOutputFeature();
 	void LoadGeneratedFeatureMap(const char* filename);
 	void DumpGeneratedFeatureMap(const char* filename);
