@@ -53,8 +53,8 @@ void ProcessElement::FetchNextIFeatureMap(){
 		stall = false;
 	}else{
 		stall = true;
-		//cout<<"PE"<<(horizontal_input_feature_chunk_num*row+col)<<" stalled:";
-		//cout<<" total features:"<<num_of_none_zero_feature_fetched<<endl;
+		cout<<"PE"<<(horizontal_input_feature_chunk_num*row+col)<<" stalled:";
+		cout<<" total features:"<<num_of_none_zero_feature_fetched<<endl;
 	}
 }
 
@@ -91,6 +91,7 @@ void ProcessElement::AccumulateProduct(){
 			}
 			output_channel_t ocoord = GetOCoord();
 			assert(ocoord>=0 && ocoord<MAX_OUTPUT_CHANNEL_NUM);
+			//cout<<"ocoord="<<ocoord<<endl;
 
 			dimension_t col_coord = GetColCoord();
 			pe_t col_id = col;

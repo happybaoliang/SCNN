@@ -30,9 +30,10 @@ int main(){
 
 	assert(MAX_FEATURES_COL_PER_CHUNK<MAX_FEATURE_DIMENSION);
 
+	assert(MAX_OUTPUT_CHANNEL_GROUP_SIZE<=MAX_OUTPUT_CHANNEL_NUM);
+
 	cout<<"PE is under utilized"<<endl;
 	cout<<"variable stride is not supported"<<endl;
-	cout<<"data overflow is not correctly solved"<<endl;
 	cout<<"fully connected layer is not implemented"<<endl;
 
 	network_t *net = CreateNetwork();
@@ -41,7 +42,7 @@ int main(){
 		net->layers[i].AllocateMemoryForWeight();
 		net->layers[i].AllocateMemoryForInputFeature();
 		net->layers[i].AllocateMemoryForOutputFeature();
-#ifndef DEBUG
+#ifdef USE_RANDOM_INPUT
 		net->layers[i].GenerateRandomWeight();
 		net->layers[i].GenerateRandomFeatureMap();
 		net->layers[i].DumpGeneratedWeight("../../../weights.bin");

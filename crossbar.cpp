@@ -104,7 +104,6 @@ bool crossbar::queueing(hls::stream<Flit> (&products)[F][I],hls::stream<Flit>* i
 			//cout<<"ochannel="<<flit[i].ochannel;
 			//cout<<" row="<<flit[i].row<<" col="<<flit[i].col;
 			acc[flit[i].col][flit[i].row].adder(flit[i].ochannel,flit[i].product);
-			//cout<<endl;
 		}
 	}
 

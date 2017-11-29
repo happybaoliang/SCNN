@@ -87,7 +87,7 @@ void DrainOutProducts(){
 }
 
 //在与I对齐的过程中，极有可能产生溢出
-void CollectAndCompressResults(struct fpga_config& config, weight_index_t co_chunk_id){
+void CollectAndCompressResults(struct fpga_config& config, output_channel_t co_chunk_id){
 	DrainOutProducts();
 #ifdef INPUT_HALOS
 	for (output_channel_t i=0;i<config.num_of_kernels_per_group;i++){
@@ -96,12 +96,12 @@ void CollectAndCompressResults(struct fpga_config& config, weight_index_t co_chu
 			for (dimension_t k=0;k<config.horizontal_output_feature_chunk_num;k++){
 				zero_t zero_count = 0;
 				feature_index_t chunk_idx = 0;
-				output_channel_t out = co_chunk_id*config.num_of_kernels_per_group+i;
 				dimension_t chunk_id = config.horizontal_output_feature_chunk_num*j + k;
 				for (dimension_t l=0;l<MAX_FEATURES_ROW_PER_CHUNK;l++){
 					for (dimension_t m=0;m<MAX_FEATURES_COL_PER_CHUNK;m++){
-						product_t product = PE[i].acc.get_and_clear(i,l,m);
-						//cout<<"["<<i<<"]["<<l<<"]["<<m<<"]:"<<product<<endl;
+						product_t product = PE[chunk_id].acc.get_and_clear(i,l,m);
+						if (config.relu) product = (product>0) ? product : (product_t)0;
+						cout<<"["<<out<<"]["<<l<<"]["<<m<<"]:"<<product<<endl;
 						if (product){
 							config.compressed_output_feature_index[out][chunk_id][chunk_idx] = zero_count;
 							config.compressed_output_features[out][chunk_id][chunk_idx]=product;

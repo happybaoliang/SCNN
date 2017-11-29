@@ -4,7 +4,7 @@
 #include<ap_int.h>
 
 
-//#define DEBUG									1
+#define USE_RANDOM_INPUT					1
 #define INPUT_HALOS							1
 
 #define ZERO_WIDTH							4
@@ -25,7 +25,7 @@
 
 #define NUM_OF_PEs							1//(MAX_OUTPUT_CHANNEL_CHUNK_NUM*MAX_FEATURE_CHUNK_NUM)
 
-#define MAX_OUTPUT_CHANNEL_GROUP_SIZE		2
+#define MAX_OUTPUT_CHANNEL_GROUP_SIZE		3
 
 //当PE数为６４时，ZU9EG的寄存器资源最多只能容纳8x8的分块，这时accumulator占的寄存器资源达到５０％，最大可尝试的分块大小为11 x 11
 #define MAX_FEATURES_ROW_PER_CHUNK			8
@@ -48,8 +48,8 @@ enum Port{
 
 
 #define MAX_ZERO_COUNT						(1<<ZERO_WIDTH)
-#define MAX_WEIGHT_VALUE					(1<<(DATA_WIDTH>>4))
-#define MAX_FEATURE_VALUE					(1<<(DATA_WIDTH>>4))
+#define MAX_WEIGHT_VALUE					(1<<(DATA_WIDTH>>1))
+#define MAX_FEATURE_VALUE					(1<<(DATA_WIDTH>>1))
 
 
 //macro declare

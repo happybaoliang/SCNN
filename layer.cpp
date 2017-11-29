@@ -81,8 +81,8 @@ layer_t::layer_t(dimension_t w, dimension_t h, input_channel_t ci, output_channe
 	assert((k>=1) && (k<=MAX_KERNEL_SIZE));
 	assert((ci>=1) && (ci<=MAX_INPUT_CHANNEL_NUM));
 	assert((co>=1) && (co<=MAX_OUTPUT_CHANNEL_NUM));
-	assert((nk>=1) && (nk<=MAX_OUTPUT_CHANNEL_NUM));
 	assert((next_k>=1) && (next_k<=MAX_KERNEL_SIZE));
+	assert((nk<=MAX_OUTPUT_CHANNEL_GROUP_SIZE) && (nk>=1));
 	assert((w>=MAX_FEATURES_COL_PER_CHUNK) && (w<=MAX_FEATURE_DIMENSION));
 	assert((h>=MAX_FEATURES_ROW_PER_CHUNK) && (h<=MAX_FEATURE_DIMENSION));
 	config.config.pad = p;
@@ -107,9 +107,10 @@ layer_t::layer_t(dimension_t w, dimension_t h, input_channel_t ci, output_channe
 	config.num_of_none_zero_input_features = NULL;
 	config.compressed_output_feature_index = NULL;
 	config.num_of_none_zero_output_features = NULL;
-	dimension_t padding = config.config.pad ? (config.config.kernel_size>>1) : (kernel_t)0;
+	kernel_t padding = config.config.pad ? (config.config.kernel_size>>1) : (kernel_t)0;
 	output_width = (input_width + 2*padding - config.config.kernel_size + 1)/config.config.stride;
 	output_height = (input_height + 2* padding - config.config.kernel_size + 1)/config.config.stride;
+	//这不是最优的解决办法，但是确实可以避免压缩后的权值数组溢出
 	assert(((nk*config.config.kernel_size*config.config.kernel_size)%F)==0);
 	config.num_of_output_channel_groups = ceil(1.0*output_channels/nk);
 	config.config.vertical_input_feature_chunk_num = ceil(1.0*input_height/MAX_FEATURES_ROW_PER_CHUNK);
@@ -117,6 +118,7 @@ layer_t::layer_t(dimension_t w, dimension_t h, input_channel_t ci, output_channe
 	config.vertical_output_feature_chunk_num = ceil(1.0*output_height/MAX_FEATURES_ROW_PER_CHUNK);
 	config.horizontal_output_feature_chunk_num = ceil(1.0*output_width/MAX_FEATURES_COL_PER_CHUNK);
 	config.num_of_kernels_per_group = nk;
+	assert((config.num_of_kernels_per_group*config.num_of_output_channel_groups)==output_channels);
 }
 
 
@@ -154,8 +156,9 @@ void layer_t::CompressWeights(){
 			for (output_channel_t k=0;k<config.num_of_kernels_per_group;k++){
 				for (kernel_t l=0;l<config.config.kernel_size;l++){
 					for (kernel_t m=0;m<config.config.kernel_size;m++){
-						if (weights[i][j*config.num_of_kernels_per_group+k][l][m]!=0){
-							config.compressed_weights[i][j][chunk_idx] = weights[i][j*config.num_of_kernels_per_group+k][l][m];
+						weight_t w = weights[i][j*config.num_of_kernels_per_group+k][l][m];
+						if (w!=0){
+							config.compressed_weights[i][j][chunk_idx] = w;
 							//cout<<"zero_count="<<zero_count<<" weight="<<config.compressed_weights[i][j][chunk_idx]<<endl;
 							config.compressed_weight_index[i][j][chunk_idx] = zero_count;
 							chunk_idx = chunk_idx + 1;
@@ -398,12 +401,12 @@ int layer_t::CheckDeCompressedConvolutionResults(){
 				if (config.relu){
 					temp = (temp>0) ? temp : (product_t)0;
 				}
-				if (temp != output_features[i][k][l]){
-					cout<<"["<<i<<"]["<<k<<"]["<<l<<"]: expect "<<temp<<" got ";
+				if ((feature_t)temp != output_features[i][k][l]){
+					cout<<"["<<i<<"]["<<k<<"]["<<l<<"]: expect "<<(feature_t)temp<<" got ";
 					cout<<output_features[i][k][l]<<endl;
 					error_count ++;
 				}else{
-					//cout<<"["<<i<<"]["<<k<<"]["<<l<<"]: "<<temp<<endl;
+					//cout<<"["<<i<<"]["<<k<<"]["<<l<<"]: "<<(feature_t)temp<<endl;
 				}
 			}
 		}

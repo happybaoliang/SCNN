@@ -13,7 +13,7 @@ void accumulator_bank::reset(){
 
 //任意时刻只有一个输出通道是活跃的，因此可以只用一个加法器
 void accumulator_bank::adder(output_channel_t ocoord, product_t product){
-	//cout<<" "<<acc[ocoord];
+	//cout<<" "<<"acc["<<ocoord<<"]:"<<acc[ocoord];
 	acc[ocoord] += product;
 	//cout<<"+="<<product<<endl;
 }
