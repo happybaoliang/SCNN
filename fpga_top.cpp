@@ -101,7 +101,7 @@ void CollectAndCompressResults(struct fpga_config& config, output_channel_t co_c
 					for (dimension_t m=0;m<MAX_FEATURES_COL_PER_CHUNK;m++){
 						product_t product = PE[chunk_id].acc.get_and_clear(i,l,m);
 						if (config.relu) product = (product>0) ? product : (product_t)0;
-						cout<<"["<<out<<"]["<<l<<"]["<<m<<"]:"<<product<<endl;
+						//cout<<"["<<out<<"]["<<l<<"]["<<m<<"]:"<<product<<endl;
 						if (product){
 							config.compressed_output_feature_index[out][chunk_id][chunk_idx] = zero_count;
 							config.compressed_output_features[out][chunk_id][chunk_idx]=product;
